@@ -1,0 +1,7 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+  data:
+    mongodb:
+      database: payment_service
+      uri: mongodb://mongodb:27017/payment_service
