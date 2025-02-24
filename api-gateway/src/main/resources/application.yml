@@ -1,0 +1,80 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8888/eureka
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      appCircuitBreaker:
+        sliding-window-type: count_based
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 10s
+  timelimiter:
+    instances:
+      appCircuitBreaker:
+        timeoutDuration: 5s
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  health:
+    circuitbreakers:
+      enabled: true
+
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            rate-limiter: "#{@redisRateLimiter}"
+            key-resolver: "#{@myKeyResolver}"
+
+        - name: CircuitBreaker
+          args:
+            name: appCircuitBreaker
+            fallbackUri: forward:/fallback
+
+        - name: UserAuthentication
+          args:
+            headerName: Authorization
+
+      routes:
+          - id: user-service
+            uri: lb://USER-SERVICE
+            predicates:
+              - Path=/api/user/**
+
+          - id: product-service
+            uri: lb://PRODUCT-SERVICE
+            predicates:
+              - Path=/api/product/**
+
+          - id: cart-service
+            uri: lb://CART-SERVICE
+            predicates:
+              - Path=/api/cart/**
+
+          - id: order-service
+            uri: lb://ORDER-SERVICE
+            predicates:
+              - Path=/api/order/**
+
+          - id: comment-service
+            uri: lb://COMMENT-SERVICE
+            predicates:
+              - Path=/api/comment/**
+  data:
+    redis:
+      port: 6379
+      url: redis://redis:6379
