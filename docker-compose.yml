@@ -1,0 +1,233 @@
+services:
+  service-discovery:
+    build: ./service-discovery
+    ports:
+      - "8888:8888"
+    depends_on:
+      - redis
+      - kafka
+      - zookeeper
+    networks:
+      - ecommerce-network
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "9000:9000"
+    depends_on:
+      service-discovery:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    env_file:
+      - .env
+
+  user-service:
+    build: ./user-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+          condition: service_started
+      service-discovery:
+          condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/user_service
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_DB_PASSWORD}
+      - SPRING_FLYWAY_USER=${MYSQL_DB_USERNAME}
+      - SPRING_FLYWAY_PASSWORD=${MYSQL_DB_PASSWORD}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    env_file:
+      - .env
+
+  product-service:
+    build: ./product-service
+    depends_on:
+      mongodb:
+        condition: service_started
+      kafka:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - SPRING_DATA_MONGODB_DATABASE=product_service
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/product_service
+
+  cart-service:
+    build: ./cart-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cart_service
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_DB_PASSWORD}
+      - SPRING_FLYWAY_USER=${MYSQL_DB_USERNAME}
+      - SPRING_FLYWAY_PASSWORD=${MYSQL_DB_PASSWORD}
+    env_file:
+      - .env
+
+  order-service:
+    build: ./order-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/order_service
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_DB_PASSWORD}
+      - SPRING_FLYWAY_USER=${MYSQL_DB_USERNAME}
+      - SPRING_FLYWAY_PASSWORD=${MYSQL_DB_PASSWORD}
+    env_file:
+      - .env
+
+  payment-service:
+    build: ./payment-service
+    depends_on:
+      mongodb:
+        condition: service_started
+      kafka:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+      stripe-cli:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - SPRING_DATA_MONGODB_DATABASE=payment_service
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/payment_service
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    env_file:
+      - .env
+
+  comment-service:
+    build: ./comment-service
+    depends_on:
+      mongodb:
+        condition: service_started
+      service-discovery:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8888/eureka
+      - SPRING_DATA_MONGODB_DATABASE=comment_service
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/comment_service
+
+  email-service:
+    build: ./email-service
+    depends_on:
+      kafka:
+        condition: service_started
+    environment:
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+    env_file:
+      - .env
+    networks:
+      - ecommerce-network
+
+  mysql:
+    image: mysql:8
+    hostname: mysql
+    networks:
+      - ecommerce-network
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init/init_scripts.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+      timeout: 5s
+
+  mongodb:
+    image: mongo
+    hostname: mongo
+    networks:
+      - ecommerce-network
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis
+    command: redis-server
+    hostname: redis
+    networks:
+      - ecommerce-network
+
+  zookeeper:
+    hostname: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ecommerce-network
+
+  kafka:
+    hostname: kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - ecommerce-network
+
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    command: >
+      listen --forward-to http://payment-service:8084/payment/webhook
+    environment:
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    env_file:
+      - .env
+    networks:
+      - ecommerce-network
+
+volumes:
+  mysql_data:
+  mongodb_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge
