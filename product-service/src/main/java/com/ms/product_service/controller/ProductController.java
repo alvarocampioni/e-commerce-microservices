@@ -29,57 +29,57 @@ public class ProductController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ProductResponse>> getProducts() {
-        return new ResponseEntity<>(productCacheService.getProducts(), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productCacheService.getProducts(), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ProductResponse> getProductById(@PathVariable String id) {
-        return new ResponseEntity<>(productCacheService.getProductById(id), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productCacheService.getProductById(id), HttpStatus.OK);
     }
 
     @GetMapping("/category/{category}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<ProductResponse>> getProductsByCategory(@PathVariable String category) {
-        return new ResponseEntity<>(productCacheService.getProductByCategory(category), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productCacheService.getProductByCategory(category), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/available")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Boolean> isAvailable(@PathVariable String id, @RequestParam int amount) {
-        return new ResponseEntity<>(productService.isAvailable(id, amount), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productService.isAvailable(id, amount), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/price")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<BigDecimal> getPrice(@PathVariable String id) {
-        return new ResponseEntity<>(productCacheService.getPrice(id), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productCacheService.getPrice(id), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/name")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> getProductName(@PathVariable String id) {
-        return new ResponseEntity<>(productCacheService.getName(id), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productCacheService.getName(id), HttpStatus.OK);
     }
 
     @PostMapping("/stock")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role, @RequestHeader("X-USER-EMAIL") String email) {
-        return new ResponseEntity<>(productService.addProduct(productRequest, role), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productService.addProduct(productRequest, role), HttpStatus.CREATED);
     }
 
     @PutMapping("{id}/stock")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable String id, @RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role) {
-        return new ResponseEntity<>(productService.updateProduct(id, productRequest, role), HttpStatus.ACCEPTED);
+        return new ResponseEntity<>(productService.updateProduct(id, productRequest, role), HttpStatus.OK);
     }
 
     @DeleteMapping("{id}/stock")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteProductById(@PathVariable String id, @RequestHeader("X-USER-ROLE") String role) {
         productService.deleteProduct(id, role);
-        return new ResponseEntity<>("Product deleted successfully !", HttpStatus.ACCEPTED);
+        return new ResponseEntity<>("Product deleted successfully !", HttpStatus.OK);
     }
 }
