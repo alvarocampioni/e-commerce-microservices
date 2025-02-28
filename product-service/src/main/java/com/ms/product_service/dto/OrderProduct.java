@@ -1,4 +1,6 @@
 package com.ms.product_service.dto;
 
-public record OrderProduct(String productId, int amount) {
+import java.math.BigDecimal;
+
+public record OrderProduct(String orderId, String customerId, String productId, BigDecimal price, int amount) {
 }
