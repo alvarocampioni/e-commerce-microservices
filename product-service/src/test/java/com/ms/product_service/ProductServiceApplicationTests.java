@@ -6,12 +6,14 @@ import com.ms.product_service.dto.ProductResponse;
 import com.ms.product_service.exception.ResourceNotFoundException;
 import com.ms.product_service.service.ProductCacheService;
 import com.ms.product_service.service.ProductService;
+import com.redis.testcontainers.RedisContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -22,7 +24,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.kafka.KafkaContainer;
+import org.testcontainers.kafka.ConfluentKafkaContainer;
+import org.testcontainers.shaded.com.google.common.base.Supplier;
+import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -44,15 +48,14 @@ class ProductServiceApplicationTests {
 
 	@Container
 	@ServiceConnection
-	static KafkaContainer kafkaContainer = new KafkaContainer( "confluentinc/cp-kafka:latest");
+	static RedisContainer redisContainer = new RedisContainer("redis:6.2.2");
+
+	@Container
+	@ServiceConnection
+	static ConfluentKafkaContainer kafkaContainer = new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:latest"));
 
 	@Autowired
 	private MongoTemplate mongoTemplate;
-
-	@DynamicPropertySource
-	static void overrideBootstrapServer(DynamicPropertyRegistry registry) {
-		registry.add("spring.kafka.bootstrap-servers", kafkaContainer::getBootstrapServers);
-	}
 
 	@Autowired
 	KafkaTemplate<String, String> kafkaTemplate;
@@ -63,13 +66,36 @@ class ProductServiceApplicationTests {
 	@Autowired
 	ProductCacheService productCacheService;
 
+	@DynamicPropertySource
+	static void setTestProperties(DynamicPropertyRegistry registry) {
+
+		Supplier<Object> supplier = () -> false;
+		registry.add("eureka.client.register-with-eureka", supplier);
+		registry.add("eureka.client.fetch-registry", supplier);
+
+		registry.add("spring.kafka.bootstrap-servers", kafkaContainer::getBootstrapServers);
+		registry.add("spring.data.mongodb.host", mongoDBContainer::getHost);
+		registry.add("spring.data.redis.port", redisContainer::getRedisPort);
+		registry.add("spring.data.redis.url", redisContainer::getRedisURI);
+	}
+
 	@Autowired
 	TestRestTemplate restTemplate;
 
 	List<String> productIds;
 
+	String stockDeductTopic = "stock-deducted";
+	String stockRecoverTopic = "stock-recovered";
+
+	@LocalServerPort
+	int port;
+
+	String baseUrl;
+
 	@BeforeEach
     void setUp() {
+		baseUrl = "http://localhost:" + port + "/api/product";
+
 		ProductResponse product1 = productService.addProduct(new ProductRequest("Headphones", "Wireless headphones", BigDecimal.valueOf(39.99), "electronic", 100), "ADMIN");
 		ProductResponse product2 = productService.addProduct(new ProductRequest("Leather Jacket", "Black leather jacket", BigDecimal.valueOf(79.99), "clothing", 30), "ADMIN");
 		ProductResponse product3 = productService.addProduct(new ProductRequest("Hammer", "Steel hammer", BigDecimal.valueOf(48.30), "tool", 79), "ADMIN");
@@ -105,9 +131,9 @@ class ProductServiceApplicationTests {
 				}
 				""", product1Id, product2Id);
 
-		kafkaTemplate.send("stock-deducted", dataJson);
+		kafkaTemplate.send(stockDeductTopic, dataJson);
 
-		await().pollInterval(Duration.ofSeconds(5))
+		await().pollInterval(Duration.ofSeconds(2))
 				.atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> {
 					ProductResponse product1 = productCacheService.getProductById(product1Id);
@@ -140,7 +166,7 @@ class ProductServiceApplicationTests {
 				}
 				""", product1Id, product2Id);
 
-		kafkaTemplate.send("stock-recovered", dataJson);
+		kafkaTemplate.send(stockRecoverTopic, dataJson);
 
 		await().pollInterval(Duration.ofSeconds(5))
 				.atMost(Duration.ofSeconds(10))
@@ -170,10 +196,11 @@ class ProductServiceApplicationTests {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("X-USER-ROLE", "ADMIN");
+		headers.setContentType(MediaType.APPLICATION_JSON);
 
 		HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
-		ResponseEntity<ProductResponse> response = restTemplate.exchange("/api/product/stock", HttpMethod.POST, request, ProductResponse.class);
+		ResponseEntity<ProductResponse> response = restTemplate.exchange(baseUrl + "/stock", HttpMethod.POST, request, ProductResponse.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.hasBody()).isTrue();
@@ -208,9 +235,11 @@ class ProductServiceApplicationTests {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("X-USER-ROLE", "ADMIN");
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
 		HttpEntity<String> request = new HttpEntity<>(updatedProductBody, headers);
 
-		ResponseEntity<ProductResponse> response = restTemplate.exchange("api/product/" + id + "/stock", HttpMethod.PUT, request, ProductResponse.class);
+		ResponseEntity<ProductResponse> response = restTemplate.exchange(baseUrl + "/" + id + "/stock", HttpMethod.PUT, request, ProductResponse.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 
@@ -219,14 +248,14 @@ class ProductServiceApplicationTests {
 
 		if(productResponse != null){
 			assertThat(productResponse.productName()).isEqualTo("Headphones PLUS");
-			assertThat(productResponse.productPrice()).isEqualTo(49.99);
+			assertThat(productResponse.productPrice()).isEqualTo(BigDecimal.valueOf(49.99));
 		}
 
 		// check if it was updated in database
 		ProductResponse updatedProduct = productCacheService.getProductById(id);
 		assertThat(updatedProduct).isNotNull();
 		assertThat(updatedProduct.productName()).isEqualTo("Headphones PLUS");
-		assertThat(updatedProduct.productPrice()).isEqualTo(49.99);
+		assertThat(updatedProduct.productPrice()).isEqualTo(BigDecimal.valueOf(49.99));
 	}
 
 	@Test
@@ -235,9 +264,11 @@ class ProductServiceApplicationTests {
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("X-USER-ROLE", "ADMIN");
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
 		HttpEntity<String> request = new HttpEntity<>(headers);
 
-		ResponseEntity<String> response = restTemplate.exchange("api/product/" + id + "/stock", HttpMethod.DELETE, request, String.class);
+		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/" + id + "/stock", HttpMethod.DELETE, request, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 		assertThat(response.getBody()).isEqualTo("Product deleted successfully !");
@@ -251,7 +282,7 @@ class ProductServiceApplicationTests {
 
 	@Test
 	void shouldFetchAllProducts() {
-		ResponseEntity<ProductResponse[]> allResponse = restTemplate.getForEntity("/api/product", ProductResponse[].class);
+		ResponseEntity<ProductResponse[]> allResponse = restTemplate.getForEntity(baseUrl, ProductResponse[].class);
 		assertThat(allResponse).isNotNull();
 		assertThat(allResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -261,14 +292,13 @@ class ProductServiceApplicationTests {
 		if(productResponses != null) {
 			assertThat(productResponses.length).isEqualTo(3);
 		}
-
 	}
 
 	@Test
 	void shouldFetchProductById(){
 		String id = productIds.getFirst();
 
-		ResponseEntity<ProductResponse> singleResponse = restTemplate.getForEntity("/api/product/" + id, ProductResponse.class);
+		ResponseEntity<ProductResponse> singleResponse = restTemplate.getForEntity(baseUrl + "/" + id, ProductResponse.class);
 		assertThat(singleResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(singleResponse.hasBody()).isTrue();
 
@@ -283,7 +313,7 @@ class ProductServiceApplicationTests {
 	@Test
 	void shouldFetchByCategory(){
 		ProductCategory category = ProductCategory.ELECTRONIC;
-		ResponseEntity<ProductResponse[]> response = restTemplate.getForEntity("/api/product/category/" + ProductCategory.ELECTRONIC.name(), ProductResponse[].class);
+		ResponseEntity<ProductResponse[]> response = restTemplate.getForEntity(baseUrl + "/" + "category/" + ProductCategory.ELECTRONIC.name(), ProductResponse[].class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
@@ -301,7 +331,7 @@ class ProductServiceApplicationTests {
 	void shouldFetchProductName(){
 		String id = productIds.getFirst();
 
-		ResponseEntity<String> response = restTemplate.getForEntity("/api/product/" + id + "/name", String.class);
+		ResponseEntity<String> response = restTemplate.getForEntity(baseUrl + "/" + id + "/name", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 		assertThat(response.getBody()).isEqualTo("Headphones");
@@ -311,7 +341,7 @@ class ProductServiceApplicationTests {
 	void shouldFetchProductPrice(){
 		String id = productIds.getFirst();
 
-		ResponseEntity<BigDecimal> response = restTemplate.getForEntity("/api/product/" + id + "/price", BigDecimal.class);
+		ResponseEntity<BigDecimal> response = restTemplate.getForEntity(baseUrl + "/" + id + "/price", BigDecimal.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 		assertThat(response.getBody()).isEqualTo(BigDecimal.valueOf(39.99));
@@ -321,14 +351,17 @@ class ProductServiceApplicationTests {
 	void shouldCheckIfAvailable(){
 		String id = productIds.getFirst();
 
-		ResponseEntity<Boolean> trueResponse = restTemplate.getForEntity("/api/product/" + id + "/available", Boolean.class);
+		int invalidAmount = productCacheService.getProductById(id).amount() + 1;
+		int validAmount = productCacheService.getProductById(id).amount();
+
+		ResponseEntity<Boolean> trueResponse = restTemplate.getForEntity(baseUrl + "/" + id + "/available?amount=" + validAmount, Boolean.class);
 		assertThat(trueResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(trueResponse.hasBody()).isTrue();
 		assertThat(trueResponse.getBody()).isTrue();
 
 		String falseId = "FAKEID";
 
-		ResponseEntity<Boolean> falseResponse = restTemplate.getForEntity("/api/product/" + falseId + "/available", Boolean.class);
+		ResponseEntity<Boolean> falseResponse = restTemplate.getForEntity(baseUrl + "/" + falseId + "/available?amount=" + invalidAmount, Boolean.class);
 		assertThat(falseResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(falseResponse.hasBody()).isTrue();
 		assertThat(falseResponse.getBody()).isFalse();

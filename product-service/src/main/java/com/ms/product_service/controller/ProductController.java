@@ -66,7 +66,7 @@ public class ProductController {
 
     @PostMapping("/stock")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role, @RequestHeader("X-USER-EMAIL") String email) {
+    public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role) {
         return new ResponseEntity<>(productService.addProduct(productRequest, role), HttpStatus.CREATED);
     }
 
