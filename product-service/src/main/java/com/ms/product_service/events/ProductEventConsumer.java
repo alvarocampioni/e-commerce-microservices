@@ -21,23 +21,23 @@ public class ProductEventConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "stock-recovered", groupId = "stock_recover")
-    public void receiveRecoverRequest(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "check-order", groupId = "order-check")
+    public void checkOrder(ConsumerRecord<String, String> record) {
         try {
             String json = record.value();
             OrderDTO orderDTO = objectMapper.readValue(json, OrderDTO.class);
-            productService.recoverStock(orderDTO);
+            productService.checkOrder(orderDTO);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @KafkaListener(topics = "stock-deducted", groupId = "stock_deduct")
-    public void receiveDeduceRequest(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "recovered-stock", groupId = "stock-recover")
+    public void receiveRecoverRequest(ConsumerRecord<String, String> record) {
         try {
             String json = record.value();
             OrderDTO orderDTO = objectMapper.readValue(json, OrderDTO.class);
-            productService.deductProduct(orderDTO);
+            productService.recoverStock(orderDTO);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -3,7 +3,12 @@ eureka:
     service-url:
       defaultZone: http://service-discovery:8888/eureka
 
+server:
+  port: 8080
+
 spring:
+  application:
+    name: product-service
   kafka:
     bootstrap-servers: kafka:9092
   data:
