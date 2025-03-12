@@ -3,31 +3,14 @@ eureka:
     service-url:
       defaultZone: http://service-discovery:8888/eureka
 
-resilience4j:
-  circuitbreaker:
-    instances:
-      comment:
-        sliding-window-type: count_based
-        permitted-number-of-calls-in-half-open-state: 3
-        automatic-transition-from-open-to-half-open-enabled: true
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        minimumNumberOfCalls: 5
-        waitDurationInOpenState: 5s
-  timelimiter:
-    instances:
-      comment:
-        timeoutDuration: 5s
+server:
+  port: 8083
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,circuitbreakers,circuitbreakerevents
-  health:
-    circuitbreakers:
-      enabled: true
 spring:
+  application:
+    name: comment-service
+  kafka:
+    bootstrap-servers: kafka:9092
   data:
     mongodb:
       database: comment_service

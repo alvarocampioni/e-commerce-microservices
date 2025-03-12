@@ -23,8 +23,8 @@ public class CommentCacheService {
     }
 
     @Cacheable(value = "comment-user", key = "#customerId")
-    public List<Comment> getCommentByCustomerId(String customerId) {
-        log.info("getCommentByCustomerId called -- accessing database");
+    public List<Comment> getCommentsByCustomerId(String customerId) {
+        log.info("getCommentsByCustomerId called -- accessing database");
         return commentRepository.findByCustomerId(customerId);
     }
 
