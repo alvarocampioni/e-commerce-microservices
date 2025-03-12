@@ -13,6 +13,7 @@ public class UserEventProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
     private final String userTopic = "notify-user";
+    private final String userDeleted = "user-deleted";
 
     @Autowired
     public UserEventProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
@@ -27,5 +28,9 @@ public class UserEventProducer {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void sendUserDeleted(String email){
+        kafkaTemplate.send(userDeleted, email);
     }
 }

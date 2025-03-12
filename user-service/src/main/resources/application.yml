@@ -3,7 +3,12 @@ eureka:
     service-url:
       defaultZone: http://service-discovery:8888/eureka
 
+server:
+  port: 8000
+
 spring:
+  application:
+    name: user-service
   kafka:
     bootstrap-servers: kafka:9092
   datasource:
@@ -11,5 +16,4 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     url: jdbc:mysql://mysql:3306/user_service
-    schemas: user_service
     locations: classpath:db/migration

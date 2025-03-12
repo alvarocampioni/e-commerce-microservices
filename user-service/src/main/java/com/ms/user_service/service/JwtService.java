@@ -3,6 +3,8 @@ package com.ms.user_service.service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.ms.user_service.dto.TokenValidationDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,27 @@ public class JwtService {
                     .sign(algorithm);
         } catch (JWTCreationException e) {
             throw new RuntimeException("Error generating token", e);
+        }
+    }
+
+    public TokenValidationDTO validateToken(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            String subject = JWT.require(algorithm)
+                    .withIssuer("auth-api")
+                    .build()
+                    .verify(token)
+                    .getSubject();
+
+            String role = JWT.require(algorithm)
+                    .withIssuer("auth-api")
+                    .build()
+                    .verify(token)
+                    .getClaim("role").asString();
+
+            return new TokenValidationDTO(subject, role);
+        } catch (JWTVerificationException e) {
+            return null;
         }
     }
 }
