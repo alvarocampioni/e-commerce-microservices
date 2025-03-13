@@ -139,7 +139,6 @@ public class ProductService {
         if(orderDTO.order() == null || orderDTO.order().isEmpty()) {
             throw new ResourceNotFoundException("Order not found");
         }
-        System.out.println(orderDTO);
         List<String> unavailable = new ArrayList<>();
         List<OrderProduct> pricedOrderProducts = new ArrayList<>();
         String orderId = orderDTO.order().getFirst().orderId();
@@ -157,8 +156,8 @@ public class ProductService {
         if(!unavailable.isEmpty()){
             productEventProducer.rejectedOrder(new RejectOrderDTO(orderId, customerId, unavailable));
         } else {
-            productEventProducer.acceptedOrder(new OrderDTO(pricedOrderProducts));
             deductProduct(orderDTO);
+            productEventProducer.acceptedOrder(new OrderDTO(pricedOrderProducts));
         }
 
     }
