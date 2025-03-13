@@ -3,32 +3,12 @@ eureka:
     service-url:
       defaultZone: http://service-discovery:8888/eureka
 
-resilience4j:
-  circuitbreaker:
-    instances:
-      cart:
-        sliding-window-type: count_based
-        permitted-number-of-calls-in-half-open-state: 3
-        automatic-transition-from-open-to-half-open-enabled: true
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        minimumNumberOfCalls: 5
-        waitDurationInOpenState: 5s
-  timelimiter:
-    instances:
-      cart:
-        timeoutDuration: 5s
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,circuitbreakers,circuitbreakerevents
-  health:
-    circuitbreakers:
-      enabled: true
+server:
+  port: 8081
 
 spring:
+  application:
+    name: cart-service
   kafka:
     bootstrap-servers: kafka:9092
   datasource:
@@ -36,7 +16,6 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     url: jdbc:mysql://mysql:3306/cart_service
-    schemas: cart_service
     locations: classpath:db/migration
   data:
     redis:

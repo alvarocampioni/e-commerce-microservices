@@ -12,7 +12,7 @@ public class CartEventProducer {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
-    private final String confirmOrder = "order-confirmed";
+    private final String loadedOrder = "loaded-order";
 
     @Autowired
     public CartEventProducer(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper) {
@@ -23,7 +23,7 @@ public class CartEventProducer {
     public void sendOrder(CartDTO cart) {
         try {
             String json = objectMapper.writeValueAsString(cart);
-            kafkaTemplate.send(confirmOrder, json);
+            kafkaTemplate.send(loadedOrder, json);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

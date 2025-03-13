@@ -1,7 +1,6 @@
 package com.ms.cart_service.controller;
 
 import com.ms.cart_service.dto.CartDTO;
-import com.ms.cart_service.dto.CartProductIdRequest;
 import com.ms.cart_service.dto.CartProductRequest;
 import com.ms.cart_service.service.CartCacheService;
 import com.ms.cart_service.service.CartProductService;
@@ -32,24 +31,22 @@ public class CartProductController {
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.FOUND)
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<CartDTO> getCartByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId){
-        return new ResponseEntity<>(cartCacheService.getCartByCustomerId(customerId), HttpStatus.FOUND);
+        return new ResponseEntity<>(cartCacheService.getCartByCustomerId(customerId), HttpStatus.OK);
     }
 
     @DeleteMapping
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @Transactional
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteCartByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId){
         cartProductService.deleteCart(customerId);
-        return new ResponseEntity<>("Cart cleared successfully", HttpStatus.ACCEPTED);
+        return new ResponseEntity<>("Cart cleared successfully !", HttpStatus.OK);
     }
 
     @DeleteMapping("/product/{productId}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @Transactional
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteProduct(@RequestHeader(value = "X-USER-EMAIL") String customerId, @PathVariable String productId){
-        cartProductService.deleteProduct(customerId, productId);
-        return new ResponseEntity<>("Product removed successfully", HttpStatus.ACCEPTED);
+        cartProductService.removeProduct(customerId, productId);
+        return new ResponseEntity<>("Product removed successfully !", HttpStatus.OK);
     }
 }

@@ -2,6 +2,7 @@ package com.ms.cart_service.repository;
 
 import com.ms.cart_service.model.CartProduct;
 import com.ms.cart_service.model.CartProductId;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +15,7 @@ public interface CartProductRepository extends JpaRepository<CartProduct, CartPr
     CartProduct findByCustomerIdAndProductId(String customerId, String productId);
     void deleteByCustomerId(String customerId);
     void deleteByCustomerIdAndProductId(String customerId, String productId);
+
+    @CacheEvict(value = "*", allEntries = true)
+    void deleteAll();
 }
