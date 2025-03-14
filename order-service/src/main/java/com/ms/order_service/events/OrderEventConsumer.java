@@ -18,11 +18,13 @@ public class OrderEventConsumer {
 
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
+    private final OrderEventProducer orderEventProducer;
 
     @Autowired
-    public OrderEventConsumer(OrderService orderService, ObjectMapper objectMapper) {
+    public OrderEventConsumer(OrderService orderService, ObjectMapper objectMapper, OrderEventProducer orderEventProducer) {
         this.orderService = orderService;
         this.objectMapper = objectMapper;
+        this.orderEventProducer = orderEventProducer;
     }
 
     @KafkaListener(topics = "accepted-order", groupId = "accepted")

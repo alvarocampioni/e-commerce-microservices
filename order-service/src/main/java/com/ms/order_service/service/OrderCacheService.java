@@ -58,7 +58,7 @@ public class OrderCacheService {
         if(orderProducts != null && !orderProducts.isEmpty()){
             return new OrderDTO(orderProducts);
         }
-        throw new ResourceNotFoundException("Order not found");
+        throw new ResourceNotFoundException("Order not found with ID: " + orderId);
     }
 
     @Cacheable(value = "archived", key = "#orderId+#email")

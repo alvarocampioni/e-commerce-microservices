@@ -382,7 +382,7 @@ class ProductServiceApplicationTests {
 				{
 					"order": [
 						{
-							"orderId": "%s",
+							"id": "%s",
 							"customerId": "%s",
 							"productId": "%s",
 							"productName": "%s",

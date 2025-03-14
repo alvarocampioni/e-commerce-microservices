@@ -2,7 +2,6 @@ package com.ms.cart_service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ms.cart_service.config.KafkaConsumerConfig;
 import com.ms.cart_service.dto.CartDTO;
 import com.ms.cart_service.model.CartProduct;
 import com.ms.cart_service.model.Product;
@@ -11,8 +10,8 @@ import com.ms.cart_service.repository.ProductRepository;
 import com.ms.cart_service.service.CartCacheService;
 import com.ms.cart_service.service.ProductService;
 import com.redis.testcontainers.RedisContainer;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -25,6 +24,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
@@ -37,6 +37,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -63,7 +64,7 @@ class CartServiceApplicationTests {
 	@Autowired
 	KafkaTemplate<String, String> kafkaTemplate;
 
-	KafkaConsumer<String, String> consumer;
+	static KafkaConsumer<String, String> consumer;
 
 	static Properties props;
 
@@ -73,7 +74,7 @@ class CartServiceApplicationTests {
 	String userDeletedTopic = "user-deleted";
 	String createdOrderTopic = "created-order";
 
-	String loadedOrderTopic = "loaded-order";
+	static String loadedOrderTopic = "loaded-order";
 
 	@DynamicPropertySource
 	static void setTestProperties(DynamicPropertyRegistry registry) {
@@ -120,6 +121,9 @@ class CartServiceApplicationTests {
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 		props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+		consumer = new KafkaConsumer<>(props);
+		consumer.subscribe(List.of(loadedOrderTopic));
 	}
 
 	@BeforeEach
@@ -138,11 +142,11 @@ class CartServiceApplicationTests {
 	void cleanUp() {
 		productRepository.deleteAll();
 		cartProductRepository.deleteAll();
+	}
 
-		if(consumer != null) {
-			consumer.unsubscribe();
-			consumer.close();
-		}
+	@AfterAll
+	static void afterAll() {
+		consumer.close();
 	}
 
 	@Test
@@ -205,7 +209,7 @@ class CartServiceApplicationTests {
 	}
 
 	@Test
-	void shouldDeleteProduct(){
+	void shouldVerifyDeleteProduct(){
 		try {
 			String productId = "1";
 			Product product = productRepository.findById(productId).orElse(null);
@@ -230,9 +234,6 @@ class CartServiceApplicationTests {
 
 	@Test
 	void shouldSendOrderDataAfterRequest() {
-		consumer = new KafkaConsumer<>(props);
-		consumer.subscribe(Collections.singletonList(loadedOrderTopic));
-
 		String customerId = "jhon";
 		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
         try {
@@ -241,9 +242,9 @@ class CartServiceApplicationTests {
 
 			await().atMost(Duration.ofSeconds(10))
 					.untilAsserted(() -> {
-						ConsumerRecords<String, String> loadedRecords = consumer.poll(Duration.ofSeconds(5));
-						assertThat(loadedRecords.count()).isGreaterThan(0);
-						loadedRecords.forEach(record -> assertThat(record.value()).isEqualTo(json));
+						ConsumerRecord<String, String> loadedOrder = KafkaTestUtils.getSingleRecord(consumer, loadedOrderTopic);
+						assertThat(loadedOrder).isNotNull();
+						assertThat(loadedOrder.value()).isEqualTo(json);
 
 						// check if cart was deleted after sending data to order
 						CartDTO afterRequestCart = cartCacheService.getCartByCustomerId(customerId);

@@ -43,13 +43,11 @@ public class OrderService {
     public void placeCartOrder(CartDTO cart){
         String orderId = UUID.randomUUID().toString();
         OrderDTO orderDTO = new OrderDTO(new ArrayList<>());
-        
         for (CartProductDTO product : cart.cart()) {
             OrderProduct orderProduct = mapCartProductToOrderProduct(product, orderId);
             orderDTO.order().add(orderProduct);
+            orderRepository.save(orderProduct);
         }
-
-        orderRepository.saveAll(orderDTO.order());
         orderEventProducer.checkOrder(orderDTO);
     }
 
@@ -71,10 +69,17 @@ public class OrderService {
     @CacheEvict(value = "all-orders", allEntries = true)
     public void acceptOrder(OrderDTO orderDTO){
         if (orderDTO.order() != null && !orderDTO.order().isEmpty()) {
-            for(OrderProduct orderProduct : orderDTO.order()){
-                evictOrderCache(orderProduct.getId());
+            String orderId = orderDTO.order().getFirst().getId();
+            String customerId = orderDTO.order().getFirst().getCustomerId();
+            OrderDTO savedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+
+            List<OrderProduct> orderProducts = savedOrder.order();
+            for (int i = 0; i < orderDTO.order().size(); i++) {
+                orderProducts.get(i).setPrice(orderDTO.order().get(i).getPrice());
             }
-            orderRepository.saveAll(orderDTO.order());
+
+            orderRepository.saveAll(orderProducts);
+            evictOrderCache(orderDTO.order().getFirst().getId());
         }
     }
 
@@ -172,7 +177,7 @@ public class OrderService {
                 Objects.requireNonNull(cacheManager.getCache("unarchived")).evict(customerId);
             }
         } else {
-            throw new ResourceNotFoundException("Order not found");
+            throw new ResourceNotFoundException("Order not found with ID: " + orderId);
         }
     }
 

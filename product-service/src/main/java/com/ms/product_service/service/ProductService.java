@@ -141,14 +141,14 @@ public class ProductService {
         }
         List<String> unavailable = new ArrayList<>();
         List<OrderProduct> pricedOrderProducts = new ArrayList<>();
-        String orderId = orderDTO.order().getFirst().orderId();
+        String orderId = orderDTO.order().getFirst().id();
         String customerId = orderDTO.order().getFirst().customerId();
         for(OrderProduct orderProduct: orderDTO.order()){
             if(!isAvailable(orderProduct.productId(), orderProduct.amount())) {
                 unavailable.add(orderProduct.productName());
             } else if(unavailable.isEmpty()) {
                 BigDecimal price = productCacheService.getPrice(orderProduct.productId());
-                OrderProduct pricedProduct = new OrderProduct(orderProduct.orderId(), orderProduct.customerId(), orderProduct.productId(), orderProduct.productName(), price, orderProduct.amount());
+                OrderProduct pricedProduct = new OrderProduct(orderId, customerId, orderProduct.productId(), orderProduct.productName(), price, orderProduct.amount());
                 pricedOrderProducts.add(pricedProduct);
             }
         }
