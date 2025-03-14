@@ -2,7 +2,6 @@ package com.ms.order_service.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ms.order_service.dto.OrderCanceledDTO;
 import com.ms.order_service.dto.OrderDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,49 +19,27 @@ public class OrderEventProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void requestedOrder(String customerId) {
-        kafkaTemplate.send("requested-order", customerId);
-    }
-
     public void createdOrder(String customerId) {
         kafkaTemplate.send("created-order", customerId);
     }
 
-    public void canceledOrder(OrderCanceledDTO orderCanceledDTO) {
-        try {
-            String json = objectMapper.writeValueAsString(orderCanceledDTO);
-            kafkaTemplate.send("canceled-order", json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+    public void checkOrder(OrderDTO order) {
+        String json = parseObjectToJson(order);
+        kafkaTemplate.send("check-order", json);
     }
 
-    public void requestedCancelPayment(String orderId) {
-        kafkaTemplate.send("requested-cancel-payment", orderId);
+    public void canceledOrder(String orderId) {
+        kafkaTemplate.send("canceled-order", orderId);
     }
 
-    public void sendOrderData(OrderDTO order) {
-        try {
-            String json = objectMapper.writeValueAsString(order);
-            kafkaTemplate.send("order-placed", json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+    public void recoveredStock(OrderDTO order){
+        String json = parseObjectToJson(order);
+        kafkaTemplate.send("recovered-stock", json);
     }
 
-    public void requestDeductStock(OrderDTO order){
+    private <T> String parseObjectToJson(T order) {
         try {
-            String json = objectMapper.writeValueAsString(order);
-            kafkaTemplate.send("stock-deducted", json);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void requestRecoverStock(OrderDTO order){
-        try {
-            String json = objectMapper.writeValueAsString(order);
-            kafkaTemplate.send("stock-recovered", json);
+            return objectMapper.writeValueAsString(order);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

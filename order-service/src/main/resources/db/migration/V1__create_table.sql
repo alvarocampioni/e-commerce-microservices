@@ -4,10 +4,10 @@ CREATE TABLE t_order (
     product_id varchar(255) NOT NULL,
     product_name varchar(255) NOT NULL,
     amount int NOT NULL,
-    price decimal(10, 2) NOT NULL,
+    price decimal(10, 2),
     is_Archived bool NOT NULL ,
     status int NOT NULL,
-    order_date DATETIME NOT NULL,
-    execution_date DATETIME,
+    order_date DATETIME(3) NOT NULL,
+    execution_date DATETIME(3),
     PRIMARY KEY (id, customer_id, product_id)
 );
