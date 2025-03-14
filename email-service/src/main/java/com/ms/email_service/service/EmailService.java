@@ -99,8 +99,7 @@ public class EmailService {
         javaMailSender.send(message);
     }
 
-    public void orderRequestedEmail(CartDTO cart){
-        System.out.println(cart);
+    public void orderLoadedEmail(CartDTO cart){
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         StringBuilder content = new StringBuilder();
@@ -114,25 +113,19 @@ public class EmailService {
         javaMailSender.send(message);
     }
 
-    public void orderCanceledEmail(OrderCanceledDTO orderCanceledDTO) {
+    public void orderRejectedEmail(RejectOrderDTO rejectOrderDTO) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setSubject("Order Canceled");
         StringBuilder content = new StringBuilder();
-        if(orderCanceledDTO.unavailable().isEmpty()) {
-            content.append("We had some problems fetching the order products so the order was canceled ! Try again later !")
-                    .append("\n")
-                    .append("Sorry for the inconvenience !");
-        } else {
-            content.append("Some products were unavailable at the time of the request so the order was canceled ! Try again later !")
-                    .append("\n")
-                    .append("Unavailable products:")
-                    .append("\n")
-                    .append(buildUnavailableToString(orderCanceledDTO.unavailable()))
-                    .append("\n")
-                    .append("Sorry for the inconvenience !");
-        }
-        message.setTo(orderCanceledDTO.email());
+        content.append("Some products were unavailable at the time of the request so the order was canceled ! Try again later !")
+                .append("\n")
+                .append("Unavailable products:")
+                .append("\n")
+                .append(buildUnavailableToString(rejectOrderDTO.unavailable()))
+                .append("\n")
+                .append("Sorry for the inconvenience !");
+        message.setTo(rejectOrderDTO.email());
         message.setText(content.toString());
         javaMailSender.send(message);
     }

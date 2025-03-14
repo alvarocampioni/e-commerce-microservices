@@ -44,7 +44,7 @@ public class EmailEventConsumer {
     }
 
     @KafkaListener(topics = {"succeeded-payment", "failed-payment", "canceled-payment"}, groupId = "payment-status-change")
-    public void succeededPayment(ConsumerRecord<String, String> record) {
+    public void paymentChangeStatus(ConsumerRecord<String, String> record) {
         try {
             String json = record.value();
             String topic = record.topic();
@@ -65,23 +65,23 @@ public class EmailEventConsumer {
         }
     }
 
-    @KafkaListener(topics = "order-confirmed", groupId = "order-request")
-    public void requestedOrder(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "loaded-order", groupId = "order-load")
+    public void loadedOrder(ConsumerRecord<String, String> record) {
         try {
             String json = record.value();
             CartDTO cartDTO = jacksonObjectMapper.readValue(json, CartDTO.class);
-            emailService.orderRequestedEmail(cartDTO);
+            emailService.orderLoadedEmail(cartDTO);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @KafkaListener(topics = "canceled-order", groupId = "order-cancel")
-    public void canceledOrder(ConsumerRecord<String, String> record) {
+    @KafkaListener(topics = "rejected-order", groupId = "order-reject")
+    public void rejectedOrder(ConsumerRecord<String, String> record) {
         try {
             String json = record.value();
-            OrderCanceledDTO orderCanceledDTO = jacksonObjectMapper.readValue(json, OrderCanceledDTO.class);
-            emailService.orderCanceledEmail(orderCanceledDTO);
+            RejectOrderDTO rejectOrderDTO = jacksonObjectMapper.readValue(json, RejectOrderDTO.class);
+            emailService.orderRejectedEmail(rejectOrderDTO);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
