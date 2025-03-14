@@ -22,7 +22,7 @@ public class StripeEventConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "order-placed", groupId = "stripe")
+    @KafkaListener(topics = "accepted-order", groupId = "stripe")
     public void receiveOrderData(ConsumerRecord<String, String> record) throws StripeException {
         try {
             String json = record.value();
@@ -33,7 +33,7 @@ public class StripeEventConsumer {
         }
     }
 
-    @KafkaListener(topics = "requested-cancel-payment", groupId = "stripe")
+    @KafkaListener(topics = "canceled-order", groupId = "stripe")
     public void receiveCancelRequest(ConsumerRecord<String, String> record) throws StripeException {
         stripeService.cancelPayment(record.value());
     }

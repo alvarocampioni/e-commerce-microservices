@@ -30,7 +30,7 @@ public class StripeWebhookController {
     private final StripeEventProducer stripeEventProducer;
 
     @Autowired
-    public StripeWebhookController(@Value("${STRIPE_WEBHOOK_SECRET}")String whSecret, PaymentRequestService paymentRequestService, StripeEventProducer stripeEventProducer) {
+    public StripeWebhookController(@Value("${STRIPE.WEBHOOK.SECRET}")String whSecret, PaymentRequestService paymentRequestService, StripeEventProducer stripeEventProducer) {
         this.whSecret = whSecret;
         this.paymentRequestService = paymentRequestService;
         this.stripeEventProducer = stripeEventProducer;

@@ -25,7 +25,7 @@ public class StripeService {
     private final StripeEventProducer eventProducer;
     private final PaymentRequestService paymentRequestService;
 
-    @Value("${STRIPE_API_KEY}")
+    @Value("${STRIPE.API.KEY}")
     private String stripeSecretKey;
 
     @Autowired
@@ -34,7 +34,7 @@ public class StripeService {
         this.paymentRequestService = paymentRequestService;
     }
 
-    public String processOrderCreation(OrderDTO order) throws StripeException {
+    public void processOrderCreation(OrderDTO order) throws StripeException {
         Session session = generateCheckoutSession(order);
         if(session != null) {
             // notify user
@@ -42,7 +42,6 @@ public class StripeService {
             eventProducer.paymentCreated(new PaymentCreatedDTO(userEmail, order, session.getUrl()));
             // store session data
             paymentRequestService.createPaymentRequest(new PaymentRequest(order.order().getFirst().customerId(), order.order().getFirst().id(), session.getId(), Status.CREATED));
-            return session.getUrl();
         } else {
             throw new RuntimeException("Session is null");
         }
@@ -89,6 +88,7 @@ public class StripeService {
     }
 
     public void cancelPayment(String orderId) throws StripeException {
+        Stripe.apiKey = stripeSecretKey;
         PaymentRequest paymentRequest = paymentRequestService.getPaymentRequestById(orderId);
         Session session = Session.retrieve(paymentRequest.getSessionId());
         session.expire();

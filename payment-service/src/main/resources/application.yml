@@ -1,4 +1,15 @@
+server:
+  port: 8084
+
+STRIPE:
+  API:
+    KEY: ${STRIPE.API.KEY}
+  WEBHOOK:
+    SECRET: ${STRIPE.WEBHOOK.SECRET}
+
 spring:
+  application:
+    name: payment-service
   kafka:
     bootstrap-servers: kafka:9092
   data:
