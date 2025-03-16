@@ -21,10 +21,10 @@ public class CartCacheService {
         this.cartProductRepository = cartProductRepository;
     }
 
-    @Cacheable(value = "cart", key = "#customerId")
-    public CartDTO getCartByCustomerId(String customerId) {
-        log.info("getCartByCustomerId called -- accessing database");
-        List<CartProduct> fetchedCart = cartProductRepository.findByCustomerId(customerId);
+    @Cacheable(value = "cart", key = "#email")
+    public CartDTO getCartByEmail(String email) {
+        log.info("getCartByEmail called -- accessing database");
+        List<CartProduct> fetchedCart = cartProductRepository.findByEmail(email);
         return new CartDTO(fetchedCart);
     }
 }

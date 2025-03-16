@@ -37,7 +37,7 @@ public class OrderService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "unarchived", key = "#cart.cart().getFirst().customerId()"),
+            @CacheEvict(value = "unarchived", key = "#cart.cart().getFirst().email()"),
             @CacheEvict(value = "all-orders", allEntries = true)
     })
     public void placeCartOrder(CartDTO cart){
@@ -54,7 +54,7 @@ public class OrderService {
     private OrderProduct mapCartProductToOrderProduct(CartProductDTO product, String orderId) {
         OrderProduct orderProduct = new OrderProduct();
         orderProduct.setId(orderId);
-        orderProduct.setCustomerId(product.customerId());
+        orderProduct.setEmail(product.email());
         orderProduct.setProductId(product.productId());
         orderProduct.setAmount(product.amount());
         orderProduct.setStatus(OrderStatus.PROCESSING);
@@ -70,8 +70,8 @@ public class OrderService {
     public void acceptOrder(OrderDTO orderDTO){
         if (orderDTO.order() != null && !orderDTO.order().isEmpty()) {
             String orderId = orderDTO.order().getFirst().getId();
-            String customerId = orderDTO.order().getFirst().getCustomerId();
-            OrderDTO savedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+            String email = orderDTO.order().getFirst().getEmail();
+            OrderDTO savedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 
             List<OrderProduct> orderProducts = savedOrder.order();
             for (int i = 0; i < orderDTO.order().size(); i++) {
@@ -91,7 +91,7 @@ public class OrderService {
             @CacheEvict(value = "all-orders", allEntries = true)
     })
     public void archiveOrderById(String orderId, String email){
-        OrderDTO orderDTO = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, email);
+        OrderDTO orderDTO = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 
         if(!orderDTO.order().getFirst().getStatus().equals(OrderStatus.PROCESSING)) {
             for (OrderProduct orderProduct : orderDTO.order()) {
@@ -111,7 +111,7 @@ public class OrderService {
             @CacheEvict(value = "all-orders", allEntries = true)
     })
     public void unarchiveOrderById(String orderId, String email){
-        OrderDTO orderDTO = orderCacheService.getArchivedOrderByOrderIdAndCustomerId(orderId, email);
+        OrderDTO orderDTO = orderCacheService.getArchivedOrderByOrderIdAndEmail(orderId, email);
 
         for(OrderProduct orderProduct : orderDTO.order()){
             orderProduct.setArchived(false);
@@ -140,7 +140,7 @@ public class OrderService {
             @CacheEvict(value = "all-orders", allEntries = true)
     })
     public void cancelOrder(String orderId, String email){
-        OrderDTO orderDTO = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, email);
+        OrderDTO orderDTO = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 
         if(orderDTO.order().getFirst().getStatus().equals(OrderStatus.PROCESSING)){
             updateOrderStatus(orderId, OrderStatus.CANCELED);
@@ -168,13 +168,13 @@ public class OrderService {
     private void evictOrderCache(String orderId){
         OrderDTO orderDTO = new OrderDTO(orderRepository.findById(orderId));
         if(orderDTO.order() != null && !orderDTO.order().isEmpty()) {
-            String customerId = orderDTO.order().getFirst().getCustomerId();
+            String email = orderDTO.order().getFirst().getEmail();
             if (orderDTO.order().getFirst().isArchived()) {
-                Objects.requireNonNull(cacheManager.getCache("archived")).evict(orderId+customerId);
-                Objects.requireNonNull(cacheManager.getCache("archived")).evict(customerId);
+                Objects.requireNonNull(cacheManager.getCache("archived")).evict(orderId+email);
+                Objects.requireNonNull(cacheManager.getCache("archived")).evict(email);
             } else {
-                Objects.requireNonNull(cacheManager.getCache("unarchived")).evict(orderId+customerId);
-                Objects.requireNonNull(cacheManager.getCache("unarchived")).evict(customerId);
+                Objects.requireNonNull(cacheManager.getCache("unarchived")).evict(orderId+email);
+                Objects.requireNonNull(cacheManager.getCache("unarchived")).evict(email);
             }
         } else {
             throw new ResourceNotFoundException("Order not found with ID: " + orderId);

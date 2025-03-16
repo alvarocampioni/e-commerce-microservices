@@ -34,17 +34,17 @@ public class CommentService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "comment-user", key = "#customerId"),
-            @CacheEvict(value = "comment-specific", key = "#customerId+#productId"),
+            @CacheEvict(value = "comment-user", key = "#email"),
+            @CacheEvict(value = "comment-specific", key = "#email+#productId"),
             @CacheEvict(value = "comment-product", key = "#productId"),
     })
-    public void postComment(String customerId, String productId, CommentDTO commentDTO) {
+    public void postComment(String email, String productId, CommentDTO commentDTO) {
         if (!isAvailable(productId)) {
             throw new ResourceNotFoundException("Product not found");
         }
         Comment comment = new Comment();
         comment.setProductId(productId);
-        comment.setCustomerId(customerId);
+        comment.setEmail(email);
         comment.setContent(commentDTO.content());
         comment.setPostDate(new Date());
         comment.setUpdateDate(new Date());
@@ -53,31 +53,31 @@ public class CommentService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "comment-user", key = "#customerId"),
+            @CacheEvict(value = "comment-user", key = "#email"),
     })
-    public void deleteCommentByCustomerId(String customerId) {
-        List<Comment> comments = commentRepository.findByCustomerId(customerId);
+    public void deleteCommentByEmail(String email) {
+        List<Comment> comments = commentRepository.findByEmail(email);
         for(Comment comment : comments) {
             String productId = comment.getProductId();
             String id = comment.getId();
-            Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(customerId+productId);
+            Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(email+productId);
             Objects.requireNonNull(cacheManager.getCache("comment-product")).evict(productId);
             Objects.requireNonNull(cacheManager.getCache("comment-id")).evict(id);
         }
-        commentRepository.deleteByCustomerId(customerId);
+        commentRepository.deleteByEmail(email);
     }
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "comment-user", key = "#customerId"),
+            @CacheEvict(value = "comment-user", key = "#email"),
             @CacheEvict(value = "comment-id", key = "#id"),
     })
-    public void deleteOwnCommentById(String customerId, String id){
+    public void deleteOwnCommentById(String email, String id){
         Optional<Comment> comment = commentRepository.findById(id);
-        if(comment.isPresent() && customerId.equals(comment.get().getCustomerId())){
+        if(comment.isPresent() && email.equals(comment.get().getEmail())){
             String productId = comment.get().getProductId();
             if(productId != null) {
-                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(customerId+productId);
+                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(email+productId);
                 Objects.requireNonNull(cacheManager.getCache("comment-product")).evict(productId);
             }
             commentRepository.deleteById(id);
@@ -98,10 +98,10 @@ public class CommentService {
         Optional<Comment> comment = commentRepository.findById(id);
         if(comment.isPresent()) {
             String productId = comment.get().getProductId();
-            String customerId = comment.get().getCustomerId();
-            if (productId != null && customerId != null) {
-                Objects.requireNonNull(cacheManager.getCache("comment-user")).evict(customerId);
-                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(customerId+productId);
+            String email = comment.get().getEmail();
+            if (productId != null && email != null) {
+                Objects.requireNonNull(cacheManager.getCache("comment-user")).evict(email);
+                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(email+productId);
                 Objects.requireNonNull(cacheManager.getCache("comment-product")).evict(productId);
             }
             commentRepository.deleteById(id);
@@ -112,18 +112,18 @@ public class CommentService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "comment-user", key = "#customerId"),
+            @CacheEvict(value = "comment-user", key = "#email"),
             @CacheEvict(value = "comment-id", key = "#id"),
     })
-    public void updateCommentByCommentId(String customerId, String id, CommentDTO commentDTO) {
+    public void updateCommentByCommentId(String email, String id, CommentDTO commentDTO) {
         Optional<Comment> comment = commentRepository.findById(id);
-        if(comment.isPresent() && customerId.equals(comment.get().getCustomerId())) {
+        if(comment.isPresent() && email.equals(comment.get().getEmail())) {
             Comment updatedComment = comment.get();
             updatedComment.setContent(commentDTO.content());
             updatedComment.setUpdateDate(new Date());
             String productId = updatedComment.getProductId();
             if(productId != null) {
-                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(customerId+productId);
+                Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(email+productId);
                 Objects.requireNonNull(cacheManager.getCache("comment-product")).evict(productId);
             }
             commentRepository.save(updatedComment);
@@ -135,14 +135,14 @@ public class CommentService {
     @Transactional
     @CacheEvict(value = "comment-product", key = "#productId")
     public void deleteCommentByProductId(String productId) {
-        List<String> affectedCustomersCache = commentRepository.findCustomerIdsByProductId(productId);
+        List<String> affectedCustomersCache = commentRepository.findEmailsByProductId(productId);
         List<String> affectedCommentsCache = commentRepository.findIdsByProductId(productId);
 
         commentRepository.deleteByProductId(productId);
 
-        affectedCustomersCache.forEach(customerId -> {
-            Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(customerId + productId);
-            Objects.requireNonNull(cacheManager.getCache("comment-user")).evict(customerId);
+        affectedCustomersCache.forEach(email -> {
+            Objects.requireNonNull(cacheManager.getCache("comment-specific")).evict(email + productId);
+            Objects.requireNonNull(cacheManager.getCache("comment-user")).evict(email);
         });
         affectedCommentsCache.forEach(id -> Objects.requireNonNull(cacheManager.getCache("comment-id")).evict(id));
     }

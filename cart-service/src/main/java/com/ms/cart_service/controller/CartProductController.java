@@ -4,7 +4,6 @@ import com.ms.cart_service.dto.CartDTO;
 import com.ms.cart_service.dto.CartProductRequest;
 import com.ms.cart_service.service.CartCacheService;
 import com.ms.cart_service.service.CartProductService;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,28 +24,28 @@ public class CartProductController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<String> addToCart(@RequestBody CartProductRequest cartProductRequest, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        cartProductService.addToCart(cartProductRequest, customerId);
+    public ResponseEntity<String> addToCart(@RequestBody CartProductRequest cartProductRequest, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        cartProductService.addToCart(cartProductRequest, email);
         return new ResponseEntity<>("Product added successfully !", HttpStatus.CREATED);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<CartDTO> getCartByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId){
-        return new ResponseEntity<>(cartCacheService.getCartByCustomerId(customerId), HttpStatus.OK);
+    public ResponseEntity<CartDTO> getCartByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+        return new ResponseEntity<>(cartCacheService.getCartByEmail(email), HttpStatus.OK);
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteCartByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId){
-        cartProductService.deleteCart(customerId);
+    public ResponseEntity<String> deleteCartByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+        cartProductService.deleteCart(email);
         return new ResponseEntity<>("Cart cleared successfully !", HttpStatus.OK);
     }
 
     @DeleteMapping("/product/{productId}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteProduct(@RequestHeader(value = "X-USER-EMAIL") String customerId, @PathVariable String productId){
-        cartProductService.removeProduct(customerId, productId);
+    public ResponseEntity<String> deleteProduct(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String productId){
+        cartProductService.removeProduct(email, productId);
         return new ResponseEntity<>("Product removed successfully !", HttpStatus.OK);
     }
 }

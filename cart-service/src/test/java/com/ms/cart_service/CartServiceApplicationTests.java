@@ -12,7 +12,6 @@ import com.ms.cart_service.service.ProductService;
 import com.redis.testcontainers.RedisContainer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.*;
@@ -36,7 +35,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -151,14 +149,14 @@ class CartServiceApplicationTests {
 
 	@Test
 	void shouldDeleteCartAfterUserDeleted(){
-		String customerId = "jhon";
-		kafkaTemplate.send(userDeletedTopic, customerId);
+		String email = "jhon";
+		kafkaTemplate.send(userDeletedTopic, email);
 
 		await().pollInterval(Duration.ofSeconds(2))
 				.atMost(Duration.ofSeconds(20))
 				.untilAsserted(() -> {
 					// check if cart was deleted
-					CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+					CartDTO cart = cartCacheService.getCartByEmail(email);
 					assertThat(cart.cart().isEmpty()).isTrue();
 				});
 	}
@@ -234,11 +232,11 @@ class CartServiceApplicationTests {
 
 	@Test
 	void shouldSendOrderDataAfterRequest() {
-		String customerId = "jhon";
-		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+		String email = "jhon";
+		CartDTO cart = cartCacheService.getCartByEmail(email);
         try {
 			String json = objectMapper.writeValueAsString(cart);
-			kafkaTemplate.send(createdOrderTopic, customerId);
+			kafkaTemplate.send(createdOrderTopic, email);
 
 			await().atMost(Duration.ofSeconds(10))
 					.untilAsserted(() -> {
@@ -247,7 +245,7 @@ class CartServiceApplicationTests {
 						assertThat(loadedOrder.value()).isEqualTo(json);
 
 						// check if cart was deleted after sending data to order
-						CartDTO afterRequestCart = cartCacheService.getCartByCustomerId(customerId);
+						CartDTO afterRequestCart = cartCacheService.getCartByEmail(email);
 						assertThat(afterRequestCart.cart().isEmpty()).isTrue();
 					});
 		} catch (JsonProcessingException e) {
@@ -257,7 +255,7 @@ class CartServiceApplicationTests {
 
 	@Test
 	void shouldAddProductToCart() {
-		String customerId = "fred";
+		String email = "fred";
 		String productId = "2";
 
 		String requestBody = String.format("""
@@ -267,7 +265,7 @@ class CartServiceApplicationTests {
 				}
 				""", productId);
 
-		HttpEntity<String> request = createHttpEntity(customerId, requestBody);
+		HttpEntity<String> request = createHttpEntity(email, requestBody);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.POST, request, String.class);
 
@@ -276,7 +274,7 @@ class CartServiceApplicationTests {
 		assertThat(response.getBody()).isEqualTo("Product added successfully !");
 
 		// check if it was added to the database
-		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+		CartDTO cart = cartCacheService.getCartByEmail(email);
 		assertThat(cart.cart().isEmpty()).isFalse();
 		assertThat(cart.cart().size()).isEqualTo(2);
 		assertThat(cart.cart().stream().anyMatch(product -> product.getProductId().equals(productId))).isTrue();
@@ -285,10 +283,10 @@ class CartServiceApplicationTests {
 
 	@Test
 	void shouldRemoveProductFromCart() {
-		String customerId = "jhon";
+		String email = "jhon";
 		String productId = "1";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/product/" + productId, HttpMethod.DELETE, request, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -296,16 +294,16 @@ class CartServiceApplicationTests {
 		assertThat(response.getBody()).isEqualTo("Product removed successfully !");
 
 		// check if it was removed from database
-		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+		CartDTO cart = cartCacheService.getCartByEmail(email);
 		assertThat(cart.cart().size()).isEqualTo(1);
 		assertThat(cart.cart().stream().anyMatch(product -> product.getProductId().equals(productId))).isFalse();
 	}
 
 	@Test
 	void shouldEmptyCart(){
-		String customerId = "jhon";
+		String email = "jhon";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.DELETE, request, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -313,21 +311,21 @@ class CartServiceApplicationTests {
 		assertThat(response.getBody()).isEqualTo("Cart cleared successfully !");
 
 		// check if it was emptied from database
-		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+		CartDTO cart = cartCacheService.getCartByEmail(email);
 		assertThat(cart.cart().size()).isEqualTo(0);
 	}
 
 	@Test
 	void shouldGetCart(){
-		String customerId = "jhon";
+		String email = "jhon";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 
 		ResponseEntity<CartDTO> response = restTemplate.exchange(baseUrl, HttpMethod.GET, request, CartDTO.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 
-		CartDTO cart = cartCacheService.getCartByCustomerId(customerId);
+		CartDTO cart = cartCacheService.getCartByEmail(email);
 		assertThat(cart.cart().isEmpty()).isFalse();
 		assertThat(cart).isEqualTo(response.getBody());
 	}

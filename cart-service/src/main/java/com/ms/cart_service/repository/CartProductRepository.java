@@ -7,14 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CartProductRepository extends JpaRepository<CartProduct, CartProductId> {
-    List<CartProduct> findByCustomerId(String customerId);
-    CartProduct findByCustomerIdAndProductId(String customerId, String productId);
-    void deleteByCustomerId(String customerId);
-    void deleteByCustomerIdAndProductId(String customerId, String productId);
+    List<CartProduct> findByEmail(String email);
+    CartProduct findByEmailAndProductId(String email, String productId);
+    void deleteByEmail(String email);
+    void deleteByEmailAndProductId(String email, String productId);
 
     @CacheEvict(value = "*", allEntries = true)
     void deleteAll();

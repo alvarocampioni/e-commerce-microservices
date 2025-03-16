@@ -3,9 +3,9 @@ server:
 
 STRIPE:
   API:
-    KEY: ${STRIPE.API.KEY}
+    KEY: sk_test_51Qr76NEwRxCNqbMG3Ay4ObJGOXkgSrqPGuW1ksIxxSPClquksRORq7pwl4XHWovGeQge30u6Ed9t3LCQfSJmXbcR0049DitcY8
   WEBHOOK:
-    SECRET: ${STRIPE.WEBHOOK.SECRET}
+    SECRET: whsec_82fa4db8c49ddbad6b59fed9c56f23d08822c8f21a1a2385ff7ff8379443ba2b
 
 spring:
   application:

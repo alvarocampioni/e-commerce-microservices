@@ -19,8 +19,8 @@ public class OrderEventProducer {
         this.objectMapper = objectMapper;
     }
 
-    public void createdOrder(String customerId) {
-        kafkaTemplate.send("created-order", customerId);
+    public void createdOrder(String email) {
+        kafkaTemplate.send("created-order", email);
     }
 
     public void checkOrder(OrderDTO order) {

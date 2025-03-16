@@ -26,7 +26,7 @@ public class CommentEventConsumer {
 
     @KafkaListener(topics = "user-deleted", groupId = "comment-deleted")
     public void deleteComments(ConsumerRecord<String, String> record) {
-        commentService.deleteCommentByCustomerId(record.value());
+        commentService.deleteCommentByEmail(record.value());
     }
 
     @KafkaListener(topics = {"created-product", "deleted-product"}, groupId = "comment-products")

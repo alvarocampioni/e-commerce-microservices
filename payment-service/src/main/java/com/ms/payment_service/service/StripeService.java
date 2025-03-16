@@ -38,10 +38,10 @@ public class StripeService {
         Session session = generateCheckoutSession(order);
         if(session != null) {
             // notify user
-            String userEmail = order.order().getFirst().customerId();
+            String userEmail = order.order().getFirst().email();
             eventProducer.paymentCreated(new PaymentCreatedDTO(userEmail, order, session.getUrl()));
             // store session data
-            paymentRequestService.createPaymentRequest(new PaymentRequest(order.order().getFirst().customerId(), order.order().getFirst().id(), session.getId(), Status.CREATED));
+            paymentRequestService.createPaymentRequest(new PaymentRequest(order.order().getFirst().email(), order.order().getFirst().id(), session.getId(), Status.CREATED));
         } else {
             throw new RuntimeException("Session is null");
         }

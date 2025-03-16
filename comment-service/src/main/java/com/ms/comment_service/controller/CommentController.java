@@ -40,8 +40,8 @@ public class CommentController {
 
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteCommentByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String email){
-        commentService.deleteCommentByCustomerId(email);
+    public ResponseEntity<String> deleteCommentsByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+        commentService.deleteCommentByEmail(email);
         return new ResponseEntity<>("Comments deleted !", HttpStatus.OK);
     }
 
@@ -66,14 +66,14 @@ public class CommentController {
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<Comment>> getCommentsByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String email){
-        return new ResponseEntity<>(commentCacheService.getCommentsByCustomerId(email), HttpStatus.OK);
+    public ResponseEntity<List<Comment>> getCommentsByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+        return new ResponseEntity<>(commentCacheService.getCommentsByEmail(email), HttpStatus.OK);
     }
 
     @GetMapping("/me/product/{productId}")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<Comment>> getCommentsByCustomerIdAndProductId(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String productId){
-        return new ResponseEntity<>(commentCacheService.getCommentsByCustomerIdAndProductId(email, productId), HttpStatus.OK);
+        return new ResponseEntity<>(commentCacheService.getCommentsByEmailAndProductId(email, productId), HttpStatus.OK);
     }
 
     @GetMapping("/product/{productId}")

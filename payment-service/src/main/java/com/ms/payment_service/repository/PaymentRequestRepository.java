@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentRequestRepository extends MongoRepository<PaymentRequest, String> {
-    PaymentRequest findBySessionId(String sessionId);
 }

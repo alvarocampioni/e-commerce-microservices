@@ -1,10 +1,7 @@
 package com.ms.product_service.controller;
 
-import com.ms.product_service.dto.OrderDTO;
-import com.ms.product_service.dto.ProductCategory;
 import com.ms.product_service.dto.ProductRequest;
 import com.ms.product_service.dto.ProductResponse;
-import com.ms.product_service.model.Product;
 import com.ms.product_service.service.ProductCacheService;
 import com.ms.product_service.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,13 +67,13 @@ public class ProductController {
         return new ResponseEntity<>(productService.addProduct(productRequest, role), HttpStatus.CREATED);
     }
 
-    @PutMapping("{id}/stock")
+    @PutMapping("/{id}/stock")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable String id, @RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role) {
         return new ResponseEntity<>(productService.updateProduct(id, productRequest, role), HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}/stock")
+    @DeleteMapping("/{id}/stock")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> deleteProductById(@PathVariable String id, @RequestHeader("X-USER-ROLE") String role) {
         productService.deleteProduct(id, role);

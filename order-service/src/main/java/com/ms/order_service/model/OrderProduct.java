@@ -21,7 +21,7 @@ public class OrderProduct implements Serializable {
     @Id
     private String id;
     @Id
-    private String customerId;
+    private String email;
     @Id
     private String productId;
 

@@ -27,26 +27,26 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<String> placeOrder(@RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        orderEventProducer.createdOrder(customerId);
+    public ResponseEntity<String> placeOrder(@RequestHeader(value = "X-USER-EMAIL") String email) {
+        orderEventProducer.createdOrder(email);
         return new ResponseEntity<>("Order requested !", HttpStatus.ACCEPTED);
     }
 
     @PutMapping("/{orderId}/archive")
-    public ResponseEntity<String> archiveOrderById(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        orderService.archiveOrderById(orderId, customerId);
+    public ResponseEntity<String> archiveOrderById(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        orderService.archiveOrderById(orderId, email);
         return new ResponseEntity<>("Order archived !", HttpStatus.OK);
     }
 
     @PutMapping("/{orderId}/unarchive")
-    public ResponseEntity<String> unarchiveOrderById(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        orderService.unarchiveOrderById(orderId, customerId);
+    public ResponseEntity<String> unarchiveOrderById(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        orderService.unarchiveOrderById(orderId, email);
         return new ResponseEntity<>("Order unarchived !", HttpStatus.OK);
     }
 
     @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<String> cancelOrder(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        orderService.cancelOrder(orderId, customerId);
+    public ResponseEntity<String> cancelOrder(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        orderService.cancelOrder(orderId, email);
         orderService.recoverStock(orderId);
         return new ResponseEntity<>("Order cancellation requested !", HttpStatus.OK);
     }
@@ -57,23 +57,23 @@ public class OrderController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<OrderDTO>> getUnarchivedOrdersByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        return new ResponseEntity<>(orderCacheService.getUnarchivedOrdersByCustomerId(customerId), HttpStatus.OK);
+    public ResponseEntity<List<OrderDTO>> getUnarchivedOrdersByEmail(@RequestHeader(value = "X-USER-EMAIL") String email) {
+        return new ResponseEntity<>(orderCacheService.getUnarchivedOrdersByEmail(email), HttpStatus.OK);
     }
 
     @GetMapping("/me/archived")
-    public ResponseEntity<List<OrderDTO>> getArchivedOrdersByCustomerId(@RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        return new ResponseEntity<>(orderCacheService.getArchivedOrdersByCustomerId(customerId), HttpStatus.OK);
+    public ResponseEntity<List<OrderDTO>> getArchivedOrdersByEmail(@RequestHeader(value = "X-USER-EMAIL") String email) {
+        return new ResponseEntity<>(orderCacheService.getArchivedOrdersByEmail(email), HttpStatus.OK);
     }
 
     @GetMapping("me/{orderId}")
-    public ResponseEntity<OrderDTO> getUnarchivedOrderByOrderIdAndCustomerId(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        return new ResponseEntity<>(orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId), HttpStatus.OK);
+    public ResponseEntity<OrderDTO> getUnarchivedOrderByOrderIdAndEmail(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        return new ResponseEntity<>(orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email), HttpStatus.OK);
     }
 
     @GetMapping("me/{orderId}/archived")
-    public ResponseEntity<OrderDTO> getArchivedOrderByOrderIdAndCustomerId(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String customerId) {
-        return new ResponseEntity<>(orderCacheService.getArchivedOrderByOrderIdAndCustomerId(orderId, customerId), HttpStatus.OK);
+    public ResponseEntity<OrderDTO> getArchivedOrderByOrderIdAndEmail(@PathVariable String orderId, @RequestHeader(value = "X-USER-EMAIL") String email) {
+        return new ResponseEntity<>(orderCacheService.getArchivedOrderByOrderIdAndEmail(orderId, email), HttpStatus.OK);
     }
 
     @DeleteMapping("/{orderId}")

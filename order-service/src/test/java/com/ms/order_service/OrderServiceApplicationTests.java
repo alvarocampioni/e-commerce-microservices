@@ -141,9 +141,9 @@ class OrderServiceApplicationTests {
 
 	@Test
 	void shouldHandleOrderAccepted(){
-		String customerId = "fred";
+		String email = "fred";
 		String orderId = "2";
-		OrderDTO order = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+		OrderDTO order = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 		order.order().getFirst().setPrice(BigDecimal.valueOf(50));
 
 		kafkaTemplate.send(acceptedOrderTopic, parseObjectToJson(order));
@@ -151,7 +151,7 @@ class OrderServiceApplicationTests {
 		await().pollInterval(Duration.ofSeconds(2))
 				.atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> {
-					OrderDTO pricedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+					OrderDTO pricedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 					assertThat(pricedOrder).isNotNull();
 					assertThat(pricedOrder.order()).isNotNull();
 					assertThat(pricedOrder.order().size()).isEqualTo(1);
@@ -164,7 +164,7 @@ class OrderServiceApplicationTests {
 
 	@Test
 	void shouldHandleOrderRejected(){
-		String customerId = "fred";
+		String email = "fred";
 		String orderId = "2";
 
 		RejectOrderDTO rejectOrderDTO = new RejectOrderDTO(orderId);
@@ -174,7 +174,7 @@ class OrderServiceApplicationTests {
 		await().pollInterval(Duration.ofSeconds(2))
 				.atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> {
-					OrderDTO rejectedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+					OrderDTO rejectedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 					assertThat(rejectedOrder).isNotNull();
 					assertThat(rejectedOrder.order()).isNotNull();
 					assertThat(rejectedOrder.order().size()).isEqualTo(1);
@@ -184,13 +184,13 @@ class OrderServiceApplicationTests {
 
 	@Test
 	void shouldLoadAndPlaceOrder(){
-		String customerId = "nick";
+		String email = "nick";
 		String product1Id = "200";
 		String product2Id = "300";
 		String product1Name = "apple";
 		String product2Name = "phone";
 
-        List<CartProductDTO> products = new ArrayList<>(List.of(new CartProductDTO(customerId, product1Id, product1Name, 1), new CartProductDTO(customerId, product2Id, product2Name, 1)));
+        List<CartProductDTO> products = new ArrayList<>(List.of(new CartProductDTO(email, product1Id, product1Name, 1), new CartProductDTO(email, product2Id, product2Name, 1)));
 		CartDTO cart = new CartDTO(products);
 
 		kafkaTemplate.send(loadedOrderTopic, parseObjectToJson(cart));
@@ -198,7 +198,7 @@ class OrderServiceApplicationTests {
 		await().pollInterval(Duration.ofSeconds(2))
 					.atMost(Duration.ofSeconds(20))
 					.untilAsserted(() -> {
-						List<OrderDTO> orders = orderCacheService.getUnarchivedOrdersByCustomerId(customerId);
+						List<OrderDTO> orders = orderCacheService.getUnarchivedOrdersByEmail(email);
 						assertThat(orders).isNotNull();
 						assertThat(orders.size()).isEqualTo(1);
 						assertThat(orders.getFirst().order()).isNotNull();
@@ -208,22 +208,22 @@ class OrderServiceApplicationTests {
 
 						ConsumerRecord<String, String> cancelRecord = KafkaTestUtils.getSingleRecord(consumer, checkOrderTopic);
 						assertThat(cancelRecord).isNotNull();
-						assertThat(cancelRecord.value()).contains(customerId, product1Id, product2Id, product1Name, product2Name);
+						assertThat(cancelRecord.value()).contains(email, product1Id, product2Id, product1Name, product2Name);
 					});
 	}
 
 	@Test
 	void shouldHandlePaymentSuccess(){
-		String customerId = "fred";
+		String email = "fred";
 		String orderId = "2";
 
-		PaymentStatusChangedDTO paymentStatusChangedDTO = new PaymentStatusChangedDTO(customerId, orderId);
+		PaymentStatusChangedDTO paymentStatusChangedDTO = new PaymentStatusChangedDTO(email, orderId);
 		kafkaTemplate.send(succeededPaymentTopic, parseObjectToJson(paymentStatusChangedDTO));
 
 			await().pollInterval(Duration.ofSeconds(2))
 					.atMost(Duration.ofSeconds(10))
 					.untilAsserted(() -> {
-						OrderDTO successfulOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+						OrderDTO successfulOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 						assertThat(successfulOrder).isNotNull();
 						assertThat(successfulOrder.order()).isNotNull();
 						assertThat(successfulOrder.order().size()).isEqualTo(1);
@@ -233,17 +233,17 @@ class OrderServiceApplicationTests {
 
 	@Test
 	void shouldThenHandlePaymentFail() {
-		String customerId = "fred";
+		String email = "fred";
 		String orderId = "2";
 
-		PaymentStatusChangedDTO paymentStatusChangedDTO = new PaymentStatusChangedDTO(customerId, orderId);
+		PaymentStatusChangedDTO paymentStatusChangedDTO = new PaymentStatusChangedDTO(email, orderId);
 		kafkaTemplate.send(failedPaymentTopic, parseObjectToJson(paymentStatusChangedDTO));
 
 
 			await().pollInterval(Duration.ofSeconds(2))
 					.atMost(Duration.ofSeconds(20))
 					.untilAsserted(() -> {
-						OrderDTO failedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+						OrderDTO failedOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 						assertThat(failedOrder).isNotNull();
 						assertThat(failedOrder.order()).isNotNull();
 						assertThat(failedOrder.order().size()).isEqualTo(1);
@@ -251,15 +251,15 @@ class OrderServiceApplicationTests {
 
 						ConsumerRecord<String, String> record = KafkaTestUtils.getSingleRecord(consumer, recoveredStockTopic);
 						assertThat(record).isNotNull();
-						assertThat(record.value()).contains(customerId, orderId);
+						assertThat(record.value()).contains(email, orderId);
 					});
 	}
 
 	@Test
 	void shouldRequestCreatingOrder(){
-		String customerId = "nick";
+		String email = "nick";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.POST, request, String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
@@ -271,17 +271,17 @@ class OrderServiceApplicationTests {
 				.untilAsserted(() -> {
 					ConsumerRecord<String, String> cancelRecord = KafkaTestUtils.getSingleRecord(consumer, createdOrderTopic);
 					assertThat(cancelRecord).isNotNull();
-					assertThat(cancelRecord.value()).isEqualTo(customerId);
+					assertThat(cancelRecord.value()).isEqualTo(email);
 				});
 
 	}
 
 	@Test
 	void shouldCancelOrder(){
-		String customerId = "fred";
+		String email = "fred";
 		String orderId = "2";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/" + orderId + "/cancel", HttpMethod.PUT, request, String.class);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -291,7 +291,7 @@ class OrderServiceApplicationTests {
 		await().pollInterval(Duration.ofSeconds(1))
 				.atMost(Duration.ofSeconds(20))
 				.untilAsserted(() -> {
-					OrderDTO canceledOrder = orderCacheService.getUnarchivedOrderByOrderIdAndCustomerId(orderId, customerId);
+					OrderDTO canceledOrder = orderCacheService.getUnarchivedOrderByOrderIdAndEmail(orderId, email);
 					assertThat(canceledOrder).isNotNull();
 					assertThat(canceledOrder.order()).isNotNull();
 					assertThat(canceledOrder.order().size()).isEqualTo(1);
@@ -309,18 +309,18 @@ class OrderServiceApplicationTests {
 
 	@Test
 	void shouldArchiveOrderAndUnarchiveOrder(){
-		String customerId = "greg";
+		String email = "greg";
 		String orderId = "3";
 
 		// archiving
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/" + orderId + "/archive", HttpMethod.PUT, request, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody()).isEqualTo("Order archived !");
 
-		List<OrderDTO> unarchived = orderCacheService.getUnarchivedOrdersByCustomerId(customerId);
-		List<OrderDTO> archived = orderCacheService.getArchivedOrdersByCustomerId(customerId);
+		List<OrderDTO> unarchived = orderCacheService.getUnarchivedOrdersByEmail(email);
+		List<OrderDTO> archived = orderCacheService.getArchivedOrdersByEmail(email);
 		assertThat(unarchived).isNotNull();
 		assertThat(unarchived.isEmpty()).isTrue();
 		assertThat(archived).isNotNull();
@@ -332,8 +332,8 @@ class OrderServiceApplicationTests {
 		assertThat(responseTwo.getBody()).isNotNull();
 		assertThat(responseTwo.getBody()).isEqualTo("Order unarchived !");
 
-		unarchived = orderCacheService.getUnarchivedOrdersByCustomerId(customerId);
-		archived = orderCacheService.getArchivedOrdersByCustomerId(customerId);
+		unarchived = orderCacheService.getUnarchivedOrdersByEmail(email);
+		archived = orderCacheService.getArchivedOrdersByEmail(email);
 		assertThat(unarchived).isNotNull();
 		assertThat(unarchived.size()).isEqualTo(1);
 		assertThat(archived).isNotNull();
@@ -360,11 +360,11 @@ class OrderServiceApplicationTests {
 	}
 
 	@Test
-	void shouldFetchOwnOrdersByCustomerId(){
-		String customerId = "fred";
+	void shouldFetchOwnOrdersByEmail(){
+		String email = "fred";
 		String orderId = "2";
 
-		HttpEntity<String> request = createHttpEntity(customerId, null);
+		HttpEntity<String> request = createHttpEntity(email, null);
 		// get unarchived orders
 		ResponseEntity<OrderDTO[]> listResponse = restTemplate.exchange(baseUrl + "/me" , HttpMethod.GET, request, OrderDTO[].class);
 		assertResponseBodyLength(listResponse, 1);

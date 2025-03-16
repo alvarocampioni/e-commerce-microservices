@@ -18,7 +18,7 @@ public class Comment implements Serializable {
     @Id
     private String id;
     private String productId;
-    private String customerId;
+    private String email;
     private String content;
     private Date postDate;
     private Date updateDate;

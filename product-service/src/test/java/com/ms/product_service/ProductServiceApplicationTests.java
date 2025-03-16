@@ -317,7 +317,7 @@ class ProductServiceApplicationTests {
 		consumer = new KafkaConsumer<>(props);
 		consumer.subscribe(Collections.singleton(acceptedOrderTopic));
 
-		String customerId = "fred";
+		String email = "fred";
 
 		String product1Id = "1";
 		String product2Id = "2";
@@ -330,7 +330,7 @@ class ProductServiceApplicationTests {
 					"order": [
 						{
 							"orderId": "1",
-							"customerId": "%s",
+							"email": "%s",
 							"productId": "%s",
 							"productName": "%s",
 							"price": null,
@@ -338,7 +338,7 @@ class ProductServiceApplicationTests {
 						},
 						{
 							"orderId": "1",
-							"customerId": "%s",
+							"email": "%s",
 							"productId": "%s",
 							"productName": "%s",
 							"price": null,
@@ -346,7 +346,7 @@ class ProductServiceApplicationTests {
 						}
 					]
 				}
-				""", customerId, product1Id, product1.productName(), customerId, product2Id, product2.productName());
+				""", email, product1Id, product1.productName(), email, product2Id, product2.productName());
 
 		kafkaTemplate.send(checkOrderTopic, acceptedOrder);
 
@@ -374,7 +374,7 @@ class ProductServiceApplicationTests {
 		consumer.subscribe(Collections.singleton(rejectedOrderTopic));
 
 		String orderId = "1";
-		String customerId = "fred";
+		String email = "fred";
 		String productId = "invalid id";
 		String productName = "invalid name";
 
@@ -383,7 +383,7 @@ class ProductServiceApplicationTests {
 					"order": [
 						{
 							"id": "%s",
-							"customerId": "%s",
+							"email": "%s",
 							"productId": "%s",
 							"productName": "%s",
 							"price": null,
@@ -391,12 +391,12 @@ class ProductServiceApplicationTests {
 						}
 					]
 				}
-				""", orderId, customerId, productId, productName);
+				""", orderId, email, productId, productName);
 
 
 		kafkaTemplate.send(checkOrderTopic, rejectedOrder);
 
-		RejectOrderDTO rejectOrderDTO = new RejectOrderDTO(orderId, customerId, List.of(productName));
+		RejectOrderDTO rejectOrderDTO = new RejectOrderDTO(orderId, email, List.of(productName));
         try {
             String rejectionJson = objectMapper.writeValueAsString(rejectOrderDTO);
             await().atMost(Duration.ofSeconds(5))

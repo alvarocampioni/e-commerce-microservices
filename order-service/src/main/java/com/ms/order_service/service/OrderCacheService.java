@@ -37,24 +37,24 @@ public class OrderCacheService {
         }
     }
 
-    @Cacheable(value = "unarchived", key = "#customerId")
-    public List<OrderDTO> getUnarchivedOrdersByCustomerId(String customerId){
-        log.info("getUnarchivedOrdersByCustomerId called -- accessing database");
-        List<OrderProduct> products = orderRepository.findByCustomerIdAndIsArchivedIsFalse(customerId);
+    @Cacheable(value = "unarchived", key = "#email")
+    public List<OrderDTO> getUnarchivedOrdersByEmail(String email){
+        log.info("getUnarchivedOrdersByEmail called -- accessing database");
+        List<OrderProduct> products = orderRepository.findByEmailAndIsArchivedIsFalse(email);
         return mapProductsToOrderDTO(products);
     }
 
-    @Cacheable(value = "archived", key = "#customerId")
-    public List<OrderDTO> getArchivedOrdersByCustomerId(String customerId){
-        log.info("getArchivedOrdersByCustomerId called -- accessing database");
-        List<OrderProduct> products = orderRepository.findByCustomerIdAndIsArchivedIsTrue(customerId);
+    @Cacheable(value = "archived", key = "#email")
+    public List<OrderDTO> getArchivedOrdersByEmail(String email){
+        log.info("getArchivedOrdersByEmail called -- accessing database");
+        List<OrderProduct> products = orderRepository.findByEmailAndIsArchivedIsTrue(email);
         return mapProductsToOrderDTO(products);
     }
 
     @Cacheable(value = "unarchived", key = "#orderId+#email")
-    public OrderDTO getUnarchivedOrderByOrderIdAndCustomerId(String orderId, String email){
-        log.info("getUnarchivedOrdersByOrderIdCustomerId called -- accessing database");
-        List<OrderProduct> orderProducts = orderRepository.findByIdAndCustomerIdAndIsArchivedIsFalse(orderId, email);
+    public OrderDTO getUnarchivedOrderByOrderIdAndEmail(String orderId, String email){
+        log.info("getUnarchivedOrdersByOrderIdEmail called -- accessing database");
+        List<OrderProduct> orderProducts = orderRepository.findByIdAndEmailAndIsArchivedIsFalse(orderId, email);
         if(orderProducts != null && !orderProducts.isEmpty()){
             return new OrderDTO(orderProducts);
         }
@@ -62,9 +62,9 @@ public class OrderCacheService {
     }
 
     @Cacheable(value = "archived", key = "#orderId+#email")
-    public OrderDTO getArchivedOrderByOrderIdAndCustomerId(String orderId, String email){
-        log.info("getArchivedOrdersByOrderIdCustomerId called -- accessing database");
-        List<OrderProduct> orderProducts = orderRepository.findByIdAndCustomerIdAndIsArchivedIsTrue(orderId, email);
+    public OrderDTO getArchivedOrderByOrderIdAndEmail(String orderId, String email){
+        log.info("getArchivedOrdersByOrderIdEmail called -- accessing database");
+        List<OrderProduct> orderProducts = orderRepository.findByIdAndEmailAndIsArchivedIsTrue(orderId, email);
         if(orderProducts != null && !orderProducts.isEmpty()){
             return new OrderDTO(orderProducts);
         }

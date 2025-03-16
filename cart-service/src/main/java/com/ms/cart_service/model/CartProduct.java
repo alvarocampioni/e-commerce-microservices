@@ -16,8 +16,8 @@ import java.io.Serializable;
 public class CartProduct implements Serializable {
 
     @Id
-    @Column(name = "customer_id")
-    private String customerId;
+    @Column(name = "email")
+    private String email;
     @Id
     @Column(name = "product_id")
     private String productId;

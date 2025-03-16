@@ -22,10 +22,10 @@ public class CommentCacheService {
         this.commentRepository = commentRepository;
     }
 
-    @Cacheable(value = "comment-user", key = "#customerId")
-    public List<Comment> getCommentsByCustomerId(String customerId) {
-        log.info("getCommentsByCustomerId called -- accessing database");
-        return commentRepository.findByCustomerId(customerId);
+    @Cacheable(value = "comment-user", key = "#email")
+    public List<Comment> getCommentsByEmail(String email) {
+        log.info("getCommentsByemail called -- accessing database");
+        return commentRepository.findByEmail(email);
     }
 
     @Cacheable(value = "comment-product", key = "#productId")
@@ -34,10 +34,10 @@ public class CommentCacheService {
         return commentRepository.findByProductId(productId);
     }
 
-    @Cacheable(value = "comment-specific", key = "#customerId+#productId")
-    public List<Comment> getCommentsByCustomerIdAndProductId(String customerId, String productId) {
-        log.info("getCommentsByCustomerIdAndProductId called -- accessing database");
-        return commentRepository.findByCustomerIdAndProductId(customerId, productId);
+    @Cacheable(value = "comment-specific", key = "#email+#productId")
+    public List<Comment> getCommentsByEmailAndProductId(String email, String productId) {
+        log.info("getCommentsByemailAndProductId called -- accessing database");
+        return commentRepository.findByEmailAndProductId(email, productId);
     }
 
     @Cacheable(value = "comment-id", key = "#commentId")

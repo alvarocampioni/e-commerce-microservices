@@ -47,12 +47,12 @@ public class CartEventConsumer {
     }
 
     @KafkaListener(topics = "created-order", groupId = "request")
-    public void receiveOrderRequest(String customerId){
-        cartProductService.placeOrder(customerId);
+    public void receiveOrderRequest(String email){
+        cartProductService.placeOrder(email);
     }
 
     @KafkaListener(topics = "user-deleted", groupId = "cart-delete")
-    public void receiveUserDeleted(String customerId){
-        cartProductService.deleteCart(customerId);
+    public void receiveUserDeleted(String email){
+        cartProductService.deleteCart(email);
     }
 }

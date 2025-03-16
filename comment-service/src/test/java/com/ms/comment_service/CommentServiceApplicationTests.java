@@ -114,7 +114,7 @@ class CommentServiceApplicationTests {
 
 	@Test
 	void shouldPostComment(){
-		String customerId = "greg";
+		String email = "greg";
 		String productId = "phone";
 		String content = "new comment";
 		String requestBody = String.format("""
@@ -123,7 +123,7 @@ class CommentServiceApplicationTests {
 				}
 				""", content);
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, requestBody);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, requestBody);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/product/" + productId, HttpMethod.POST, httpEntity, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -140,7 +140,7 @@ class CommentServiceApplicationTests {
 
 	@Test
 	void shouldNotPostComment(){
-		String customerId = "greg";
+		String email = "greg";
 		String productId = "invalidProductId";
 		String content = "new comment";
 		String requestBody = String.format("""
@@ -149,7 +149,7 @@ class CommentServiceApplicationTests {
 				}
 				""", content);
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, requestBody);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, requestBody);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/product/" + productId, HttpMethod.POST, httpEntity, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -161,7 +161,7 @@ class CommentServiceApplicationTests {
 
 	@Test
 	void shouldUpdateComment(){
-		String customerId = "jhon";
+		String email = "jhon";
 		String commentId = "1";
 		String content = "updated comment";
 
@@ -171,7 +171,7 @@ class CommentServiceApplicationTests {
 				}
 				""", content);
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, requestBody);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, requestBody);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/me/" + commentId , HttpMethod.PUT, httpEntity, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -185,30 +185,30 @@ class CommentServiceApplicationTests {
 
 	@Test
 	void shouldDeleteCommentsAfterListeningEvent(){
-		String deletedCustomerId = "jhon";
+		String deletedEmail = "jhon";
 
-		kafkaTemplate.send(userDeletedTopic, deletedCustomerId);
+		kafkaTemplate.send(userDeletedTopic, deletedEmail);
 
 		await().pollInterval(Duration.ofSeconds(2))
 				.atMost(Duration.ofSeconds(10))
 				.untilAsserted(() -> {
-					List<Comment> comments = commentCacheService.getCommentsByCustomerId(deletedCustomerId);
+					List<Comment> comments = commentCacheService.getCommentsByEmail(deletedEmail);
 					assertThat(comments.isEmpty()).isTrue();
 				});
 	}
 
 	@Test
-	void shouldDeleteCommentsByCustomerId(){
-		String customerId = "jhon";
+	void shouldDeleteCommentsByEmail(){
+		String email = "jhon";
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, null);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, null);
 
 		ResponseEntity<String> response = restTemplate.exchange(baseUrl + "/me" , HttpMethod.DELETE, httpEntity, String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.hasBody()).isTrue();
 		assertThat(response.getBody()).isEqualTo("Comments deleted !");
 
-		List<Comment> comments = commentCacheService.getCommentsByCustomerId(customerId);
+		List<Comment> comments = commentCacheService.getCommentsByEmail(email);
 		assertThat(comments.isEmpty()).isTrue();
 	}
 
@@ -216,12 +216,12 @@ class CommentServiceApplicationTests {
 	void shouldDeleteCommentById(){
 		String commentId = "1";
 
-		String wrongCustomerId = "greg";
-		String correctCustomerId = "jhon";
+		String wrongEmail = "greg";
+		String correctEmail = "jhon";
 
-		HttpEntity<String> httpEntity = createHttpEntity(wrongCustomerId, null, null);
+		HttpEntity<String> httpEntity = createHttpEntity(wrongEmail, null, null);
 
-		// wrong customerId
+		// wrong email
 		ResponseEntity<String> failResponse = restTemplate.exchange(baseUrl + "/me/" + commentId , HttpMethod.DELETE, httpEntity, String.class);
 		assertThat(failResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
@@ -230,9 +230,9 @@ class CommentServiceApplicationTests {
 		assertThat(comment).isNotNull();
 		assertThat(comment.getContent()).isEqualTo("good phone");
 
-		httpEntity = createHttpEntity(correctCustomerId, null, null);
+		httpEntity = createHttpEntity(correctEmail, null, null);
 
-		//correct customerId
+		//correct email
 		ResponseEntity<String> successResponse = restTemplate.exchange(baseUrl + "/me/" + commentId , HttpMethod.DELETE, httpEntity, String.class);
 		assertThat(successResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(successResponse.hasBody()).isTrue();
@@ -294,10 +294,10 @@ class CommentServiceApplicationTests {
 	}
 
 	@Test
-	void shouldFetchCommentsByCustomerId(){
-		String customerId = "fred";
+	void shouldFetchCommentsByEmail(){
+		String email = "fred";
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, null);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, null);
 
 		ResponseEntity<Comment[]> response = restTemplate.exchange(baseUrl + "/me", HttpMethod.GET, httpEntity, Comment[].class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -313,11 +313,11 @@ class CommentServiceApplicationTests {
 	}
 
 	@Test
-	void shouldFetchCommentByProductIdAndCustomerId(){
-		String customerId = "fred";
+	void shouldFetchCommentByProductIdAndEmail(){
+		String email = "fred";
 		String productId = "apple";
 
-		HttpEntity<String> httpEntity = createHttpEntity(customerId, null, null);
+		HttpEntity<String> httpEntity = createHttpEntity(email, null, null);
 
 		ResponseEntity<Comment[]> response = restTemplate.exchange(baseUrl + "/me/product/" + productId, HttpMethod.GET, httpEntity, Comment[].class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

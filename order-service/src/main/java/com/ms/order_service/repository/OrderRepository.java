@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<OrderProduct, OrderProductId> {
     List<OrderProduct> findById(String orderId);
-    List<OrderProduct> findByCustomerIdAndIsArchivedIsFalse(String customerId);
-    List<OrderProduct> findByCustomerIdAndIsArchivedIsTrue(String customerId);
-    List<OrderProduct> findByIdAndCustomerIdAndIsArchivedIsFalse(String orderId, String customerId);
-    List<OrderProduct> findByIdAndCustomerIdAndIsArchivedIsTrue(String orderId, String email);
+    List<OrderProduct> findByEmailAndIsArchivedIsFalse(String email);
+    List<OrderProduct> findByEmailAndIsArchivedIsTrue(String email);
+    List<OrderProduct> findByIdAndEmailAndIsArchivedIsFalse(String orderId, String email);
+    List<OrderProduct> findByIdAndEmailAndIsArchivedIsTrue(String orderId, String email);
     void deleteById(String orderId);
 
     @CacheEvict(value = "*", allEntries = true)

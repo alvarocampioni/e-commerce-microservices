@@ -121,9 +121,9 @@ class PaymentServiceApplicationTests {
 		consumer.subscribe(List.of(canceledPaymentTopic, createdPaymentTopic));
 
 		String orderId = UUID.randomUUID().toString();
-		String customerId = UUID.randomUUID().toString();
+		String email = UUID.randomUUID().toString();
 
-		List<OrderProduct> products = List.of(new OrderProduct(orderId, customerId, "1", "apple", BigDecimal.valueOf(15), 1));
+		List<OrderProduct> products = List.of(new OrderProduct(orderId, email, "1", "apple", BigDecimal.valueOf(15), 1));
 		OrderDTO orderDTO = new OrderDTO(products);
 
 		kafkaTemplate.send(acceptedOrderTopic, parseObjectToJson(orderDTO));
@@ -135,7 +135,7 @@ class PaymentServiceApplicationTests {
 					assertThat(paymentRequest.getStatus()).isEqualTo(Status.CREATED);
 					ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
 					assertThat(records.count()).isGreaterThan(0);
-					records.forEach(record -> assertThat(record.value()).contains(customerId, "1", "apple"));
+					records.forEach(record -> assertThat(record.value()).contains(email, "1", "apple"));
 				});
 
 
@@ -149,7 +149,7 @@ class PaymentServiceApplicationTests {
 					assertThat(paymentRequest.getStatus()).isEqualTo(Status.CANCELED);
 					ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
 					assertThat(records.count()).isGreaterThan(0);
-					records.forEach(record -> assertThat(record.value()).contains(customerId, orderId));
+					records.forEach(record -> assertThat(record.value()).contains(email, orderId));
 				});
 	}
 

@@ -10,15 +10,15 @@ import java.util.List;
 
 @Repository
 public interface CommentRepository extends MongoRepository<Comment, String> {
-    List<Comment> findByCustomerId(String customerId);
-    void deleteByCustomerId(String customerId);
+    List<Comment> findByEmail(String email);
+    void deleteByEmail(String email);
     void deleteByProductId(String productId);
     List<Comment> findByProductId(String productId);
-    List<Comment> findByCustomerIdAndProductId(String customerId, String productId);
+    List<Comment> findByEmailAndProductId(String email, String productId);
 
     //fetch matching productId without _id
     @Query(value = "{ 'productId': ?0 }", fields = "{ 'customerId': 1, '_id': 0 }")
-    List<String> findCustomerIdsByProductId(String productId);
+    List<String> findEmailsByProductId(String productId);
 
     //fetch matching productId with only _id
     @Query(value = "{ 'productId': ?0 }", fields = "{ '_id': 1 }")

@@ -30,9 +30,9 @@ public class CartProductService {
     }
 
     @Transactional
-    @CacheEvict(value = "cart", key = "#customerId")
-    public void addToCart(CartProductRequest cartProductRequest, String customerId) {
-        CartProduct product = cartProductRepository.findByCustomerIdAndProductId(customerId, cartProductRequest.productId());
+    @CacheEvict(value = "cart", key = "#email")
+    public void addToCart(CartProductRequest cartProductRequest, String email) {
+        CartProduct product = cartProductRepository.findByEmailAndProductId(email, cartProductRequest.productId());
         int total = cartProductRequest.amount();
         if(product != null) {
             total += product.getAmount();
@@ -40,7 +40,7 @@ public class CartProductService {
 
         if(isAvailable(cartProductRequest.productId(), total)) {
             String name = productService.getName(cartProductRequest.productId());
-            CartProduct cartProduct = new CartProduct(customerId, cartProductRequest.productId(), name, total);
+            CartProduct cartProduct = new CartProduct(email, cartProductRequest.productId(), name, total);
             cartProductRepository.save(cartProduct);
         } else {
             throw new ProductNotAvailableException("Product with ID: " + cartProductRequest.productId() + " is not available with the amount: " + total);
@@ -52,28 +52,28 @@ public class CartProductService {
     }
 
     @Transactional
-    @CacheEvict(value = "cart", key = "#customerId")
-    public void deleteCart(String customerId) {
-        cartProductRepository.deleteByCustomerId(customerId);
+    @CacheEvict(value = "cart", key = "#email")
+    public void deleteCart(String email) {
+        cartProductRepository.deleteByEmail(email);
     }
 
     @Transactional
-    @CacheEvict(value = "cart", key = "#customerId")
-    public void removeProduct(String customerId, String productId) {
-        CartProduct product = cartProductRepository.findByCustomerIdAndProductId(customerId, productId);
+    @CacheEvict(value = "cart", key = "#email")
+    public void removeProduct(String email, String productId) {
+        CartProduct product = cartProductRepository.findByEmailAndProductId(email, productId);
         if (product == null) {
             throw new ResourceNotFoundException("Product with ID: " + productId + " not found on cart");
         }
-        cartProductRepository.deleteByCustomerIdAndProductId(customerId, productId);
+        cartProductRepository.deleteByEmailAndProductId(email, productId);
     }
 
     @Transactional
-    @CacheEvict(value = "cart", key = "#customerId")
-    public void placeOrder(String customerId) {
-        CartDTO cartDTO = cartCacheService.getCartByCustomerId(customerId);
+    @CacheEvict(value = "cart", key = "#email")
+    public void placeOrder(String email) {
+        CartDTO cartDTO = cartCacheService.getCartByEmail(email);
         if (cartDTO.cart() != null && !cartDTO.cart().isEmpty()) {
             cartEventProducer.sendOrder(cartDTO);
-            deleteCart(customerId);
+            deleteCart(email);
         }
     }
 }

@@ -109,7 +109,7 @@ public class EmailService {
                 .append(buildCartToString(cart))
                 .append("\nThank you for your preference !");
         message.setText(content.toString());
-        message.setTo(cart.cart().getFirst().customerId());
+        message.setTo(cart.cart().getFirst().email());
         javaMailSender.send(message);
     }
 

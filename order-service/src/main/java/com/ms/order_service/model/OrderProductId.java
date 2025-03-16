@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class OrderProductId implements Serializable {
 
     private String id;
-    private String customerId;
+    private String email;
     private String productId;
 
 }

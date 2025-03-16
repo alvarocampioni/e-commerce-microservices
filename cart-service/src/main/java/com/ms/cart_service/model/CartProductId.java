@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 public class CartProductId implements Serializable {
 
-    private String customerId;
+    private String email;
     private String productId;
 
 }
