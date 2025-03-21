@@ -4,6 +4,7 @@ import com.ms.product_service.dto.ProductRequest;
 import com.ms.product_service.dto.ProductResponse;
 import com.ms.product_service.service.ProductCacheService;
 import com.ms.product_service.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,19 +64,22 @@ public class ProductController {
 
     @PostMapping("/stock")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role) {
+    public ResponseEntity<ProductResponse> addProduct(@RequestBody ProductRequest productRequest, HttpServletRequest request) {
+        String role = request.getHeader("X-USER-ROLE");
         return new ResponseEntity<>(productService.addProduct(productRequest, role), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}/stock")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable String id, @RequestBody ProductRequest productRequest, @RequestHeader("X-USER-ROLE") String role) {
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable String id, @RequestBody ProductRequest productRequest, HttpServletRequest request) {
+        String role = request.getHeader("X-USER-ROLE");
         return new ResponseEntity<>(productService.updateProduct(id, productRequest, role), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}/stock")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteProductById(@PathVariable String id, @RequestHeader("X-USER-ROLE") String role) {
+    public ResponseEntity<String> deleteProductById(@PathVariable String id, HttpServletRequest request) {
+        String role = request.getHeader("X-USER-ROLE");
         productService.deleteProduct(id, role);
         return new ResponseEntity<>("Product deleted successfully !", HttpStatus.OK);
     }

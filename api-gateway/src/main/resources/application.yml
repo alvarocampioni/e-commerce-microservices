@@ -27,53 +27,143 @@ management:
       exposure:
         include: health,metrics
   health:
-    circuitbreakers:
+    circuit breakers:
       enabled: true
 
+server:
+  port: 9000
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui/index.html
+    urls:
+      - name: User Service
+        url: /user-service/v3/api-docs
+      - name: Product Service
+        url: /product-service/v3/api-docs
+      - name: Order Service
+        url: /order-service/v3/api-docs
+      - name: Cart Service
+        url: /cart-service/v3/api-docs
+      - name: Comment Service
+        url: /comment-service/v3/api-docs
 
 spring:
+  application:
+    name: api-gateway
   cloud:
     gateway:
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            rate-limiter: "#{@redisRateLimiter}"
-            key-resolver: "#{@myKeyResolver}"
-
-        - name: CircuitBreaker
-          args:
-            name: appCircuitBreaker
-            fallbackUri: forward:/fallback
-
-        - name: UserAuthentication
-          args:
-            headerName: Authorization
-
       routes:
           - id: user-service
             uri: lb://USER-SERVICE
             predicates:
               - Path=/api/user/**
+            filters:
+              - name: RequestRateLimiter
+                args:
+                  rate-limiter: "#{@redisRateLimiter}"
+                  key-resolver: "#{@myKeyResolver}"
+              - name: CircuitBreaker
+                args:
+                  name: appCircuitBreaker
+                  fallbackUri: forward:/fallback
+              - name: UserAuthentication
+                args:
+                  headerName: Authorization
 
           - id: product-service
             uri: lb://PRODUCT-SERVICE
             predicates:
               - Path=/api/product/**
+            filters:
+              - name: RequestRateLimiter
+                args:
+                  rate-limiter: "#{@redisRateLimiter}"
+                  key-resolver: "#{@myKeyResolver}"
+              - name: CircuitBreaker
+                args:
+                  name: appCircuitBreaker
+                  fallbackUri: forward:/fallback
+              - name: UserAuthentication
+                args:
+                  headerName: Authorization
 
           - id: cart-service
             uri: lb://CART-SERVICE
             predicates:
               - Path=/api/cart/**
+            filters:
+              - name: RequestRateLimiter
+                args:
+                  rate-limiter: "#{@redisRateLimiter}"
+                  key-resolver: "#{@myKeyResolver}"
+              - name: CircuitBreaker
+                args:
+                  name: appCircuitBreaker
+                  fallbackUri: forward:/fallback
+              - name: UserAuthentication
+                args:
+                  headerName: Authorization
 
           - id: order-service
             uri: lb://ORDER-SERVICE
             predicates:
               - Path=/api/order/**
+            filters:
+              - name: RequestRateLimiter
+                args:
+                  rate-limiter: "#{@redisRateLimiter}"
+                  key-resolver: "#{@myKeyResolver}"
+              - name: CircuitBreaker
+                args:
+                  name: appCircuitBreaker
+                  fallbackUri: forward:/fallback
+              - name: UserAuthentication
+                args:
+                  headerName: Authorization
 
           - id: comment-service
             uri: lb://COMMENT-SERVICE
             predicates:
               - Path=/api/comment/**
+            filters:
+              - name: RequestRateLimiter
+                args:
+                  rate-limiter: "#{@redisRateLimiter}"
+                  key-resolver: "#{@myKeyResolver}"
+              - name: CircuitBreaker
+                args:
+                  name: appCircuitBreaker
+                  fallbackUri: forward:/fallback
+              - name: UserAuthentication
+                args:
+                  headerName: Authorization
+
+          - id: user-service-docs
+            uri: lb://USER-SERVICE
+            predicates:
+              - Path=/user-service/v3/api-docs
+
+          - id: product-service-docs
+            uri: lb://PRODUCT-SERVICE
+            predicates:
+              - Path=/product-service/v3/api-docs
+
+          - id: order-service-docs
+            uri: lb://ORDER-SERVICE
+            predicates:
+              - Path=/order-service/v3/api-docs
+
+          - id: cart-service-docs
+            uri: lb://CART-SERVICE
+            predicates:
+              - Path=/cart-service/v3/api-docs
+
+          - id: comment-service-docs
+            uri: lb://COMMENT-SERVICE
+            predicates:
+              - Path=/comment-service/v3/api-docs
   data:
     redis:
       port: 6379

@@ -6,6 +6,13 @@ eureka:
 server:
   port: 8082
 
+springdoc:
+  api-docs:
+    path: /order-service/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
 spring:
   application:
     name: order-service

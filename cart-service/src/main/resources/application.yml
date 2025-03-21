@@ -6,6 +6,13 @@ eureka:
 server:
   port: 8081
 
+springdoc:
+  api-docs:
+    path: /cart-service/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
 spring:
   application:
     name: cart-service

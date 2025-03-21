@@ -1,11 +1,3 @@
-eureka:
-  client:
-    service-url:
-      defaultZone: http://service-discovery:8888/eureka
-
-server:
-  port: 8080
-
 spring:
   application:
     name: product-service
@@ -20,3 +12,23 @@ spring:
       url: redis://redis:6379
   cache:
     type: redis
+
+eureka:
+  instance:
+    hostname: product-service
+    metadata-map:
+      external-url: http://api-gateway:9000
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8888/eureka
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /product-service/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+

@@ -140,19 +140,19 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(String role, String email){
-        if(!role.equals("ADMIN")){
+    public void deleteUser(String role, String deletedEmail, String requestEmail){
+        if(!role.equals("ADMIN") || requestEmail.equals(deletedEmail)){
             throw new UnauthorizedException("Unauthorized to perform this action");
         }
 
-        Optional<User> optional = userRepository.findById(email);
+        Optional<User> optional = userRepository.findById(deletedEmail);
         if(optional.isPresent()){
-            userRepository.deleteById(email);
-            userEventProducer.sendUserDeleted(email);
+            userRepository.deleteById(deletedEmail);
+            userEventProducer.sendUserDeleted(deletedEmail);
 
             String subject = "Account deleted";
             String content = "Your account has been deleted !";
-            userEventProducer.sendUserNotification(new UserNotificationDTO(email, subject, content));
+            userEventProducer.sendUserNotification(new UserNotificationDTO(deletedEmail, subject, content));
         } else {
             throw new ResourceNotFoundException("User not found");
         }

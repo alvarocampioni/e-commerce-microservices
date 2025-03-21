@@ -6,6 +6,13 @@ eureka:
 server:
   port: 8083
 
+springdoc:
+  api-docs:
+    path: /comment-service/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
 spring:
   application:
     name: comment-service

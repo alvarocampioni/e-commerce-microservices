@@ -4,6 +4,7 @@ import com.ms.comment_service.dto.CommentDTO;
 import com.ms.comment_service.model.Comment;
 import com.ms.comment_service.service.CommentCacheService;
 import com.ms.comment_service.service.CommentService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,35 +27,40 @@ public class CommentController {
 
     @PostMapping("/product/{productId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<String> postComment(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String productId, @RequestBody CommentDTO commentDTO){
+    public ResponseEntity<String> postComment(@PathVariable String productId, @RequestBody CommentDTO commentDTO, HttpServletRequest request) {
+        String email = request.getHeader("X-USER-EMAIL");
         commentService.postComment(email, productId, commentDTO);
         return new ResponseEntity<>("Comment posted !", HttpStatus.CREATED);
     }
 
     @PutMapping("/me/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> updateComment(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String id, @RequestBody CommentDTO commentDTO){
+    public ResponseEntity<String> updateComment(@PathVariable String id, @RequestBody CommentDTO commentDTO, HttpServletRequest request) {
+        String email = request.getHeader("X-USER-EMAIL");
         commentService.updateCommentByCommentId(email, id, commentDTO);
         return new ResponseEntity<>("Comment updated !", HttpStatus.OK);
     }
 
     @DeleteMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteCommentsByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+    public ResponseEntity<String> deleteOwnCommentsByEmail(HttpServletRequest request) {
+        String email = request.getHeader("X-USER-EMAIL");
         commentService.deleteCommentByEmail(email);
         return new ResponseEntity<>("Comments deleted !", HttpStatus.OK);
     }
 
     @DeleteMapping("/me/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteOwnCommentByCommentId(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String id){
+    public ResponseEntity<String> deleteOwnCommentByCommentId(@PathVariable String id, HttpServletRequest request) {
+        String email = request.getHeader("X-USER-EMAIL");
         commentService.deleteOwnCommentById(email, id);
         return new ResponseEntity<>("Comment deleted !", HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<String> deleteAnyCommentById(@RequestHeader(value = "X-USER-ROLE") String role, @PathVariable String id){
+    public ResponseEntity<String> deleteAnyCommentById(@PathVariable String id, HttpServletRequest request) {
+        String role = request.getHeader("X-USER-ROLE");
         commentService.deleteAnyCommentById(role, id);
         return new ResponseEntity<>("Comment deleted !", HttpStatus.OK);
     }
@@ -66,13 +72,15 @@ public class CommentController {
 
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<Comment>> getCommentsByEmail(@RequestHeader(value = "X-USER-EMAIL") String email){
+    public ResponseEntity<List<Comment>> getCommentsByEmail(HttpServletRequest request){
+        String email = request.getHeader("X-USER-EMAIL");
         return new ResponseEntity<>(commentCacheService.getCommentsByEmail(email), HttpStatus.OK);
     }
 
     @GetMapping("/me/product/{productId}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<Comment>> getCommentsByCustomerIdAndProductId(@RequestHeader(value = "X-USER-EMAIL") String email, @PathVariable String productId){
+    public ResponseEntity<List<Comment>> getCommentsByCustomerIdAndProductId(@PathVariable String productId, HttpServletRequest request){
+        String email = request.getHeader("X-USER-EMAIL");
         return new ResponseEntity<>(commentCacheService.getCommentsByEmailAndProductId(email, productId), HttpStatus.OK);
     }
 
