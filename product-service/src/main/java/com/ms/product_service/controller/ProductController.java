@@ -4,8 +4,11 @@ import com.ms.product_service.dto.ProductRequest;
 import com.ms.product_service.dto.ProductResponse;
 import com.ms.product_service.service.ProductCacheService;
 import com.ms.product_service.service.ProductService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Description;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +43,7 @@ public class ProductController {
 
     @GetMapping("/category/{category}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<List<ProductResponse>> getProductsByCategory(@PathVariable String category) {
+    public ResponseEntity<List<ProductResponse>> getProductsByCategory(@Parameter(schema = @Schema(allowableValues = {"TOOL", "FOOD", "ELECTRONIC", "CLOTHING"})) @PathVariable String category) {
         return new ResponseEntity<>(productCacheService.getProductByCategory(category), HttpStatus.OK);
     }
 

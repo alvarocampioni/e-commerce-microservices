@@ -24,7 +24,7 @@ public class CommentCacheService {
 
     @Cacheable(value = "comment-user", key = "#email")
     public List<Comment> getCommentsByEmail(String email) {
-        log.info("getCommentsByemail called -- accessing database");
+        log.info("getCommentsByEmail called -- accessing database");
         return commentRepository.findByEmail(email);
     }
 
@@ -36,7 +36,7 @@ public class CommentCacheService {
 
     @Cacheable(value = "comment-specific", key = "#email+#productId")
     public List<Comment> getCommentsByEmailAndProductId(String email, String productId) {
-        log.info("getCommentsByemailAndProductId called -- accessing database");
+        log.info("getCommentsByEmailAndProductId called -- accessing database");
         return commentRepository.findByEmailAndProductId(email, productId);
     }
 
