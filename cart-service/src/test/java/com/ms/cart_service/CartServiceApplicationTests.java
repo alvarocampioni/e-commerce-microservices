@@ -280,6 +280,32 @@ class CartServiceApplicationTests {
 		assertThat(cart.cart().stream().anyMatch(product -> product.getProductId().equals(productId))).isTrue();
 	}
 
+	@Test
+	void shouldUpdateProductInCart() {
+		String email = "fred";
+		String productId = "1";
+
+		String requestBody = String.format("""
+				{
+					"productId": "%s",
+					"amount": 1
+				}
+				""", productId);
+
+		HttpEntity<String> request = createHttpEntity(email, requestBody);
+
+		ResponseEntity<String> response = restTemplate.exchange(baseUrl, HttpMethod.PUT, request, String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.hasBody()).isTrue();
+		assertThat(response.getBody()).isEqualTo("Product updated successfully !");
+
+		// check if it was added to the database
+		CartDTO cart = cartCacheService.getCartByEmail(email);
+		assertThat(cart.cart().isEmpty()).isFalse();
+		assertThat(cart.cart().size()).isEqualTo(1);
+		assertThat(cart.cart().stream().anyMatch(product -> product.getProductId().equals(productId) && product.getAmount() == 1)).isTrue();
+	}
 
 	@Test
 	void shouldRemoveProductFromCart() {

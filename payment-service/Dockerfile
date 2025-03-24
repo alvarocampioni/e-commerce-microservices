@@ -1,5 +1,12 @@
-FROM openjdk:23
-COPY ./target/payment-service-0.0.1-SNAPSHOT.jar /app/payment-service-0.0.1-SNAPSHOT.jar
+FROM maven:3.9.9 AS builder
 WORKDIR /app
-ENTRYPOINT ["java", "-jar", "payment-service-0.0.1-SNAPSHOT.jar"]
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY . .
+RUN mvn clean package -DskipTests
+
+FROM openjdk:21-slim
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 8084
+ENTRYPOINT ["java", "-jar", "app.jar"]
