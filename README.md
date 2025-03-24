@@ -2,6 +2,7 @@
 # E-Commerce Microservice
 A Scalable E-Commerce System designed with a Microservice Architecture, benefiting from its key advantages such as scalability, fault isolation, and flexibility. The system ensures asynchronous communication between services while maintaining availability and performance. The system interacts with users through an integrated email service, facilitating notifications, order updates, and transactional communication.
 
+
 ## Technologies
 - Java – Primary backend language.
 
@@ -23,7 +24,7 @@ A Scalable E-Commerce System designed with a Microservice Architecture, benefiti
 
 - Swagger – Used for API documentation to enhance development and integration processes.
 
-- Docker – Facilitates dependency management, ensures portability, and simplifies scalability across environments.
+- Docker – Facilitates dependency management, ensures portability, and simplifies scalability across environments by containerizing the services.
 
 ## Security
 - JWT: Authentication and Authorization based on generated JWT tokens to securely transmit information to the API.
@@ -34,9 +35,11 @@ A Scalable E-Commerce System designed with a Microservice Architecture, benefiti
 
 - Rate Limiter: Integrated with Spring Cloud Rate Limiter to avoid overloading services by limiting the amount of requests to the API.
 
+
 ## Testing
 
 - Integration tests are configured using the TestContainers library, which uses Docker containers to simulate real environments. This approach ensures more robust testing by providing a realistic and isolated execution environment, ensuring reliability and accuracy.
+
 
 # Run Locally
 
@@ -50,21 +53,7 @@ git clone https://github.com/your-username/e-commerce-microservices.git
 cd e-commerce-microservices
 ```
 ### 2. Configure .env
-Configure a enviroment file with the required data:
-
-```
-MYSQL_ROOT_PASSWORD=
-MYSQL_DB_USERNAME=
-MYSQL_DB_PASSWORD=
-
-STRIPE_API_KEY=  //provided by stripe client
-STRIPE_WEBHOOK_SECRET=  //provided by stripe client
-
-JWT_SECRET_KEY=
-
-SPRING_MAIL_USERNAME=  //email used to send system notifications
-SPRING_MAIL_PASSWORD=  //email app password
-```
+Create a `.env` file with the required data found in `.env.example`
 
 ### 3. Run
 ```
