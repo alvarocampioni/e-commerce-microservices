@@ -27,6 +27,13 @@ A Scalable E-Commerce System designed with a Microservice Architecture, benefiti
 - Docker – Facilitates dependency management, ensures portability, and simplifies scalability across environments by containerizing the services.
 
 ## Security
+The system has two levels of access: Admin and Customer.
+
+- Admin: Responsible for managing products, able to delete users and orders, can visualize general data.
+
+- Customer: Basic authorities, only has access to own account.
+
+Some features of the system to improve security:
 - JWT: Authentication and Authorization based on generated JWT tokens to securely transmit information to the API.
 
 - Email Verification: Registered users must verify their email to use the system, verification code sent by email. 
